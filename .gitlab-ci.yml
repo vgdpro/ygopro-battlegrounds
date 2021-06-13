@@ -462,7 +462,7 @@ trigger:
   tags:
     - linux
   script:
-    - apt update; apt -y install curl jq
-    - 'curl -X POST https://api.mycard.moe/ygopro/release-helper/release -H "Authorization: $RELEASE_HELPER_TOKEN" -F "name=$CI_COMMIT_TAG" -F "file=@./dist-files.txt" | jq'
+    - apt update; apt -y install curl
+    - 'curl -X POST https://api.mycard.moe/ygopro/release-helper/release -H "Authorization: $RELEASE_HELPER_TOKEN" -F "name=$CI_COMMIT_TAG" -F "file=@./dist-files.txt"'
   only:
     - tags
