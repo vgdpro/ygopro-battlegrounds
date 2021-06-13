@@ -32,9 +32,9 @@ solution "ygo"
         libdirs { "/usr/local/lib" }
 
     configuration "macosx"
-        defines { "LUA_USE_MACOSX", "DBL_MAX_10_EXP=+308", "DBL_MANT_DIG=53"}
-        includedirs { "/usr/local/include", "/usr/local/include/*" }
-        libdirs { "/usr/local/lib", "/usr/X11/lib" }
+        defines { "LUA_USE_MACOSX", "DBL_MAX_10_EXP=+308", "DBL_MANT_DIG=53", "GL_SILENCE_DEPRECATION" }
+        includedirs { "/usr/local/include/event2", "/usr/local/include/freetype2", "/usr/local/opt/sqlite3/include" }
+        libdirs { "/usr/local/lib", "/usr/local/opt/sqlite3/lib" }
         buildoptions { "-stdlib=libc++" }
         links { "OpenGL.framework", "Cocoa.framework", "IOKit.framework" }
 
@@ -85,6 +85,9 @@ solution "ygo"
 		include "freetype"
 		include "irrlicht"
 		include "sqlite3"
+	end
+    if os.ishost("linux") then
+		include "irrlicht_linux"
 	end
 	if USE_IRRKLANG then
 		include "ikpmp3"
