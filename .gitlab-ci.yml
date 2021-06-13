@@ -4,6 +4,7 @@ stages:
   - sign
   - pack
   - deploy
+  - notify
 
 variables:
   GIT_DEPTH: "1"
@@ -444,6 +445,24 @@ upload_to_minio:
   script:
     - pip install -U -i https://mirrors.aliyun.com/pypi/simple/ awscli
     - aws s3 --endpoint=https://minio.mycard.moe:9000 sync dist/ s3://mycard/mcpro
+    - cd dist
+    - ls -1 > ../dist-files.txt
+    - cd ..
+  artifacts:
+    paths:
+      - dist-files.txt
   only:
     - tags
     - gitlabci
+
+trigger:
+  stage: notify
+  dependencies:
+    - upload_to_minio
+  tags:
+    - linux
+  script:
+    - apt update; apt -y install curl jq
+    - 'curl -X POST https://api.mycard.moe/ygopro/release-helper/release -H "Authorization: $RELEASE_HELPER_TOKEN" -F "name=$CI_COMMIT_TAG" -F "file=@./dist-files.txt" | jq'
+  only:
+    - tags
