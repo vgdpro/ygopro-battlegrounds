@@ -7,7 +7,10 @@ project "ygopro"
     files { "**.cpp", "**.cc", "**.c", "**.h" }
     excludes { "lzma/**", "spmemvfs/**" }
     includedirs { "../ocgcore" }
-    links { "ocgcore", "clzma", "cspmemvfs", "Irrlicht", "freetype", "sqlite3", "event" }
+    links { "ocgcore", "clzma", "cspmemvfs", "Irrlicht", "sqlite3", "freetype" }
+    if not LINUX_ALL_STATIC then
+        links { "event" }
+    end
     if USE_IRRKLANG then
         defines { "YGOPRO_USE_IRRKLANG" }
         links { "ikpmp3" }
@@ -17,6 +20,10 @@ project "ygopro"
         end
     end
 
+    configuration "not linux"
+        if LINUX_ALL_STATIC then
+            links { "event" }
+        end
     configuration "windows"
         files "ygopro.rc"
         excludes "CGUIButton.cpp"
@@ -42,21 +49,44 @@ project "ygopro"
     configuration "not vs*"
         buildoptions { "-std=c++14", "-fno-rtti" }
     configuration "not windows"
-        includedirs { "/usr/include/irrlicht", "/usr/include/freetype2" }
         excludes { "COSOperator.*" }
-        links { "event_pthreads", "dl", "pthread" }
+        links { "dl", "pthread" }
+        if not LINUX_ALL_STATIC then
+            links { "event_pthreads" }
+        end
+        if BUILD_SQLITE then
+            includedirs { "../sqlite3" }
+        end
+        if BUILD_FREETYPE then
+            includedirs {"../freetype/include" }
+        else
+            includedirs { "/usr/include/freetype2" }
+        end
     configuration { "not windows", "not macosx" }
         links "GL"
     configuration "linux"
+        linkoptions { "-static-libstdc++", "-static-libgcc", "-Wl,-rpath=./lib/" }
         includedirs { "../irrlicht_linux/include" }
-        links { "X11", "Xxf86vm", "lua5.3-c++" }
+        if BUILD_LUA then
+            links { "lua" }
+        else
+            links { "lua5.3-c++" }
+        end
+        links { "X11", "Xxf86vm" }
+        if LINUX_ALL_STATIC then
+            local libeventRootPrefix=LIB_ROOT
+            if LIBEVENT_ROOT then
+                includedirs { LIBEVENT_ROOT.."/include" }
+                libeventRootPrefix=LIBEVENT_ROOT.."/lib/"
+            end
+            linkoptions { libeventRootPrefix.."libevent.a", libeventRootPrefix.."libevent_pthreads.a" }
+        end
         if USE_IRRKLANG then
             links { "IrrKlang" }
-            linkoptions{ "-Wl,-rpath=./" }
             libdirs { "../irrklang/bin/linux-gcc-64" }
         end
     configuration "macosx"
-		links { "lua" }
+        links { "lua" }
         includedirs { "../irrlicht/include" }
         libdirs { "../irrlicht" }
         if USE_IRRKLANG then
