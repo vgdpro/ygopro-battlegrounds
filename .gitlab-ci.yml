@@ -4,6 +4,7 @@ stages:
   - combine
   - pack
   - deploy
+  - notify
 
 variables:
   GIT_DEPTH: "1"
