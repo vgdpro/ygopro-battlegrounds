@@ -7,10 +7,7 @@ project "ygopro"
     files { "**.cpp", "**.cc", "**.c", "**.h" }
     excludes { "lzma/**", "spmemvfs/**" }
     includedirs { "../ocgcore" }
-    links { "ocgcore", "clzma", "cspmemvfs", "Irrlicht", "sqlite3", "freetype" }
-    if not LINUX_ALL_STATIC then
-        links { "event" }
-    end
+    links { "ocgcore", "clzma", "cspmemvfs", "Irrlicht", "sqlite3", "freetype", "event" }
     if USE_IRRKLANG then
         defines { "YGOPRO_USE_IRRKLANG" }
         links { "ikpmp3" }
@@ -20,10 +17,6 @@ project "ygopro"
         end
     end
 
-    configuration "not linux"
-        if LINUX_ALL_STATIC then
-            links { "event" }
-        end
     configuration "windows"
         files "ygopro.rc"
         excludes "CGUIButton.cpp"
@@ -51,9 +44,11 @@ project "ygopro"
     configuration "not windows"
         excludes { "COSOperator.*" }
         links { "dl", "pthread" }
-        if not LINUX_ALL_STATIC then
-            links { "event_pthreads" }
+        if LIBEVENT_ROOT then
+            includedirs { LIBEVENT_ROOT.."/include" }
+            libdirs { LIBEVENT_ROOT.."/lib/" }
         end
+        links { "event_pthreads" }
         if BUILD_SQLITE then
             includedirs { "../sqlite3" }
         end
@@ -73,14 +68,6 @@ project "ygopro"
             links { "lua5.3-c++" }
         end
         links { "X11", "Xxf86vm" }
-        if LINUX_ALL_STATIC then
-            local libeventRootPrefix=LIB_ROOT
-            if LIBEVENT_ROOT then
-                includedirs { LIBEVENT_ROOT.."/include" }
-                libeventRootPrefix=LIBEVENT_ROOT.."/lib/"
-            end
-            linkoptions { libeventRootPrefix.."libevent.a", libeventRootPrefix.."libevent_pthreads.a" }
-        end
         if USE_IRRKLANG then
             links { "IrrKlang" }
             libdirs { "../irrklang/bin/linux-gcc-64" }
@@ -89,6 +76,10 @@ project "ygopro"
         links { "lua" }
         includedirs { "../irrlicht/include" }
         libdirs { "../irrlicht" }
+        if MAC_ARM then
+            buildoptions { "--target=arm64-apple-macos11" }
+            linkoptions { "-arch arm64" }
+        end
         if USE_IRRKLANG then
             links { "irrklang" }
             libdirs { "../irrklang/bin/macosx-gcc" }
