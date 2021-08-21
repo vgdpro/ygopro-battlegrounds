@@ -504,7 +504,7 @@ pack_macos_en-US:
     - tags
     - gitlabci
 
-upload_to_minio:
+upload:
   stage: deploy
   dependencies:
     - pack_windows_zh-CN
@@ -515,26 +515,8 @@ upload_to_minio:
     - pack_macos_en-US
   tags: 
     - linux
-  script:
-    - aws s3 --endpoint=https://minio.mycard.moe:9000 sync dist/ s3://mycard/mcpro
-    - cd dist
-    - ls -1 > ../dist-files.txt
-    - cd ..
-  artifacts:
-    paths:
-      - dist-files.txt
-  only:
-    - tags
-    - gitlabci
-
-trigger:
-  stage: notify
-  dependencies:
-    - upload_to_minio
-  tags:
-    - linux
-  script:
-    - apt update; apt -y install curl
-    - 'curl -X POST https://api.mycard.moe/ygopro/release-helper/release -H "Authorization: $RELEASE_HELPER_TOKEN" -F "name=$CI_COMMIT_TAG" -F "file=@./dist-files.txt"'
+  variables:
+    appVersion: $CI_COMMIT_TAG
+  script: ./.ci/update-packager.sh
   only:
     - tags
