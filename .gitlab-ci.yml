@@ -517,6 +517,6 @@ upload:
     - linux
   variables:
     appVersion: $CI_COMMIT_TAG
-  script: ./.ci/update-packager.sh
+  script: ./.ci/upload-packager.sh
   only:
     - tags
