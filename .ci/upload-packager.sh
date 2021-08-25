@@ -12,13 +12,27 @@ echo "Login succeeded."
 
 appName="ygopro"
 
+handleErrorMessage() {
+  rawJsonInput="$1"
+  successInfo=$(echo "$rawJsonInput" | jq '.success')
+  statusCode=$(echo "$rawJsonInput" | jq '.statusCode')
+  
+  if [[ "$successInfo" != "true" ]]; then
+    failMessage=$(echo "$rawJsonInput" | jq '.success')
+    echo "$rawJsonInput"
+    exit 1
+  fi
+}
+
 runForDepot() {
   platform=$1
   locale=$2
   archivePath="./dist/ygopro-$appVersion-$platform-$locale.tar.zst"
   suffix="?platform=$platform&locale=$locale&arch=generic"
   echo "Uploading $archivePath"
-  curl -H "$header" -X POST "$apiRoot/release/api/build/$appName/${appVersion}${suffix}" -F file=@$archivePath
+  result=$(curl -H "$header" -X POST "$apiRoot/release/api/build/$appName/${appVersion}${suffix}" -F file=@$archivePath)
+  handleErrorMessage "$result"
+  echo "$result" | jq .
 }
 
 runForDepot win32 zh-CN
