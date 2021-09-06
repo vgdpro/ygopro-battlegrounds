@@ -369,6 +369,7 @@ public:
 	irr::gui::IGUIButton* btnDeleteReplay;
 	irr::gui::IGUIButton* btnRenameReplay;
 	irr::gui::IGUIButton* btnReplayCancel;
+	irr::gui::IGUIButton* btnExportDeck;
 	irr::gui::IGUIEditBox* ebRepStartTurn;
 	//single play
 	irr::gui::IGUIWindow* wSinglePlay;
@@ -633,6 +634,7 @@ extern Game* mainGame;
 #define BUTTON_CANCEL_REPLAY		132
 #define BUTTON_DELETE_REPLAY		133
 #define BUTTON_RENAME_REPLAY		134
+#define BUTTON_EXPORT_DECK			135
 #define BUTTON_REPLAY_START			140
 #define BUTTON_REPLAY_PAUSE			141
 #define BUTTON_REPLAY_STEP			142
@@ -790,6 +792,12 @@ extern Game* mainGame;
 #define BUTTON_BIG_CARD_ZOOM_IN		381
 #define BUTTON_BIG_CARD_ZOOM_OUT	382
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
+
+#define AVAIL_OCG					0x1
+#define AVAIL_TCG					0x2
+#define AVAIL_CUSTOM				0x4
+#define AVAIL_SC					0x8
+#define AVAIL_OCGTCG				(AVAIL_OCG|AVAIL_TCG)
 
 #define DEFAULT_DUEL_RULE			5
 
