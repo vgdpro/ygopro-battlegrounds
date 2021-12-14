@@ -73,7 +73,7 @@ project "ygopro"
             libdirs { "../irrklang/bin/linux-gcc-64" }
         end
     configuration "macosx"
-        links { "lua" }
+        links { "lua", "z" }
         libdirs { "../irrlicht" }
         if MAC_ARM then
             buildoptions { "--target=arm64-apple-macos12" }
