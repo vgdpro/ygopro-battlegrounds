@@ -28,6 +28,8 @@ solution "ygo"
                 MAC_ARM=true
             end
         end
+    else
+        BUILD_LUA=true -- tell ocgcore to include ../lua directory
     end
     if (os.ishost("windows") or os.getenv("USE_IRRKLANG")) and not os.getenv("NO_IRRKLANG") then
         USE_IRRKLANG = true
