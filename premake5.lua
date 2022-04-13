@@ -132,7 +132,7 @@ end
             include "lua"
         end
         if BUILD_SQLITE then
-            include "sqlite3/premake4.lua"
+            include "sqlite3"
         end
         if BUILD_FREETYPE then
             include "freetype"
