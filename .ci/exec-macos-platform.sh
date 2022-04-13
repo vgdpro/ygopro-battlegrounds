@@ -3,10 +3,14 @@ set -x
 set -o errexit
 
 TARGET_YGOPRO_BINARY_PATH=./ygopro-platforms/ygopro-platform-$TARGET_PATFORM
+export EVENT_INCLUDE_DIR=$PWD/libevent-stable/include
+export EVENT_LIB_DIR=$PWD/libevent-stable/lib
+export IRRLICHT_INCLUDE_DIR=$PWD/irrlicht/include
+export IRRLICHT_LIB_DIR=$PWD/irrlicht
 
 git submodule update --init
 
-./premake5 gmake --cc=clang --build-freetype --build-sqlite --event-include-dir=$PWD/libevent-stable/include --event-lib-dir=$PWD/libevent-stable/lib --irrlicht-include-dir=$PWD/irrlicht/include --irrlicht-lib-dir=$PWD/irrlicht
+./premake5 gmake --cc=clang --build-freetype --build-sqlite
 cd build
 make config=release -j4
 cd ..
