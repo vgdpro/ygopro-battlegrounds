@@ -141,8 +141,12 @@ exec_windows:
     - mat_irrklang
     - mat_windows
   variables:
+    YGOPRO_BUILD_LUA: '1'
+    YGOPRO_BUILD_SQLITE: '1'
+    YGOPRO_BUILD_FREETYPE: '1'
+    YGOPRO_BUILD_IRRLICHT: '1'
     IRRKLANG_PRO: '1'
-    USE_IRRKLANG: "1"
+    USE_IRRKLANG: '1'
   cache:
     key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
     paths:
@@ -163,8 +167,11 @@ exec_linux:
   tags:
     - linux
   variables:
-    YGOPRO_BUILD_ALL: '1'
-    USE_IRRKLANG: "1"
+    YGOPRO_BUILD_LUA: '1'
+    YGOPRO_BUILD_SQLITE: '1'
+    YGOPRO_BUILD_FREETYPE: '1'
+    YGOPRO_BUILD_IRRLICHT: '1'
+    USE_IRRKLANG: '1'
   dependencies:
     - mat_common
     - mat_irrklang
@@ -200,7 +207,10 @@ exec_macos_platform_x86:
     - mat_common
     - mat_macos_platform_x86
   variables:
-    USE_IRRKLANG: "1"
+    YGOPRO_BUILD_LUA: '1'
+    YGOPRO_BUILD_SQLITE: '1'
+    YGOPRO_BUILD_FREETYPE: '1'
+    USE_IRRKLANG: '1'
     TARGET_PATFORM: x86
   cache:
     key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
@@ -223,6 +233,9 @@ exec_macos_platform_m1:
     - mat_common
     - mat_macos_platform_m1
   variables:
+    YGOPRO_BUILD_LUA: '1'
+    YGOPRO_BUILD_SQLITE: '1'
+    YGOPRO_BUILD_FREETYPE: '1'
     TARGET_PATFORM: m1
     YGOPRO_TARGET_ARM: '1'
   cache:

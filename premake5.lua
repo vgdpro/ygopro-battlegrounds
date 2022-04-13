@@ -2,36 +2,30 @@ solution "ygo"
     location "build"
     language "C++"
     objdir "obj"
-    if not os.ishost("windows") then
-        if os.getenv("YGOPRO_BUILD_LUA") then
-            BUILD_LUA=true
-        end
-        if os.getenv("YGOPRO_BUILD_SQLITE") then
-            BUILD_SQLITE=true
-        end
-        if os.getenv("YGOPRO_BUILD_FREETYPE") then
-            BUILD_FREETYPE=true
-        end
-        if os.getenv("YGOPRO_BUILD_ALL") or os.ishost("macosx") then
-            BUILD_ALL=true
-        end
-        if os.getenv("YGOPRO_LIBEVENT_STATIC_PATH") then
-            LIBEVENT_ROOT=os.getenv("YGOPRO_LIBEVENT_STATIC_PATH")
-        end
-        if BUILD_ALL then
-            BUILD_LUA=true
-            BUILD_SQLITE=true
-            BUILD_FREETYPE=true
-        end
-        if os.ishost("macosx") then
-            if os.getenv("YGOPRO_TARGET_ARM") then
-                MAC_ARM=true
-            end
-        end
-    else
-        BUILD_LUA=true -- tell ocgcore to include ../lua directory
+    if os.getenv("YGOPRO_BUILD_LUA") then
+        BUILD_LUA=true
     end
-    if (os.ishost("windows") or os.getenv("USE_IRRKLANG")) and not os.getenv("NO_IRRKLANG") then
+    if os.getenv("YGOPRO_BUILD_SQLITE") then
+        BUILD_SQLITE=true
+    end
+    if os.getenv("YGOPRO_BUILD_FREETYPE") then
+        BUILD_FREETYPE=true
+    end
+    if os.getenv("YGOPRO_BUILD_IRRLICHT") then
+        BUILD_IRRLICHT=true
+    end
+    if os.getenv("YGOPRO_LIBEVENT_STATIC_PATH") then
+        LIBEVENT_ROOT=os.getenv("YGOPRO_LIBEVENT_STATIC_PATH")
+    end
+    if os.ishost("macosx") then
+        if os.getenv("YGOPRO_TARGET_ARM") then
+            MAC_ARM=true
+        end
+    end
+    if os.ishost("windows") then
+        BUILD_EVENT=true -- only on windows for now
+    end
+    if os.getenv("USE_IRRKLANG") and not os.getenv("NO_IRRKLANG") then
         USE_IRRKLANG = true
         if os.getenv("IRRKLANG_PRO") then
             IRRKLANG_PRO = true
@@ -122,24 +116,20 @@ end
 
     include "ocgcore"
     include "gframe"
-    if os.ishost("windows") then
+    if BUILD_LUA then
         include "lua"
-        include "event"
-        include "freetype"
-        include "sqlite3"
-    else
-        if BUILD_LUA then
-            include "lua"
-        end
-        if BUILD_SQLITE then
-            include "sqlite3"
-        end
-        if BUILD_FREETYPE then
-            include "freetype"
-        end
     end
-    if not os.ishost("macosx") then
+    if BUILD_EVENT then
+        include "event"
+    end
+    if BUILD_FREETYPE then
+        include "freetype"
+    end
+    if BUILD_IRRLICHT then
         include "irrlicht"
+    end
+    if BUILD_SQLITE then
+        include "sqlite3"
     end
     if USE_IRRKLANG then
         include "ikpmp3"
