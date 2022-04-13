@@ -1,85 +1,83 @@
 include "lzma/."
 include "spmemvfs/."
 
-project "ygopro"
+project "YGOPro"
     kind "WindowedApp"
 
-    files { "**.cpp", "**.cc", "**.c", "**.h" }
-    excludes { "lzma/**", "spmemvfs/**" }
-    includedirs { "../ocgcore", "../irrlicht/include" }
-    links { "ocgcore", "clzma", "cspmemvfs", "Irrlicht", "sqlite3", "freetype", "event" }
+    files { "*.cpp", "*.h" }
+    includedirs { "../ocgcore" }
+    links { "ocgcore", "clzma", "cspmemvfs", LUA_LIB_NAME, "sqlite3", "irrlicht", "freetype", "event" }
+
+    if BUILD_EVENT then
+        includedirs { "../event/include" }
+    else
+        includedirs { EVENT_INCLUDE_DIR }
+        libdirs { EVENT_LIB_DIR }
+    end
+
+    if BUILD_IRRLICHT then
+        includedirs { "../irrlicht/include" }
+    else
+        includedirs { IRRLICHT_INCLUDE_DIR }
+        libdirs { IRRLICHT_LIB_DIR }
+    end
+
+    if BUILD_FREETYPE then
+        includedirs { "../freetype/include" }
+    else
+        includedirs { FREETYPE_INCLUDE_DIR }
+        libdirs { FREETYPE_LIB_DIR }
+    end
+
+    if BUILD_SQLITE then
+        includedirs { "../sqlite3" }
+    else
+        includedirs { SQLITE_INCLUDE_DIR }
+        libdirs { SQLITE_LIB_DIR }
+    end
+
     if USE_IRRKLANG then
         defines { "YGOPRO_USE_IRRKLANG" }
-        links { "ikpmp3" }
-        includedirs { "../irrklang/include" }
-        if IRRKLANG_PRO then
-            defines { "IRRKLANG_STATIC" }
+        includedirs { IRRKLANG_INCLUDE_DIR }
+        if not IRRKLANG_PRO then
+            libdirs { IRRKLANG_LIB_DIR }
         end
     end
 
-    configuration "windows"
-        files "ygopro.rc"
-        excludes "CGUIButton.cpp"
-        includedirs { "../freetype/include", "../event/include", "../sqlite3" }
-        links { "lua" }
+    filter "system:windows"
         defines { "_IRR_WCHAR_FILESYSTEM" }
+        files "ygopro.rc"
+        libdirs { "$(DXSDK_DIR)Lib/x86" }
         if USE_IRRKLANG then
             links { "irrKlang" }
-            if not IRRKLANG_PRO then
-                libdirs { "../irrklang/lib/Win32-visualStudio" }
+            if IRRKLANG_PRO then
+                defines { "IRRKLANG_STATIC" }
+                links { "ikpmp3" }
+                filter { "not configurations:Debug" }
+                    libdirs { IRRKLANG_PRO_RELEASE_LIB_DIR }
+                filter { "configurations:Debug" }
+                    libdirs { IRRKLANG_PRO_DEBUG_LIB_DIR }
+                filter {}
             end
         end
         links { "opengl32", "ws2_32", "winmm", "gdi32", "kernel32", "user32", "imm32" }
-    if IRRKLANG_PRO then
-        configuration { "windows", "not vs2017", "not vs2019" }
-            libdirs { "../irrklang/lib/Win32-visualStudio" }
-        configuration { "windows", "vs2017" }
-            libdirs { "../irrklang/lib/Win32-vs2017" }
-        configuration { "windows", "vs2019" }
-            libdirs { "../irrklang/lib/Win32-vs2019" }
-    end
-    configuration {"windows", "not vs*"}
-        includedirs { "/mingw/include/irrlicht", "/mingw/include/freetype2" }
-    configuration "not vs*"
+    filter "not action:vs*"
         buildoptions { "-std=c++14", "-fno-rtti" }
-    configuration "not windows"
-        excludes { "COSOperator.*" }
-        links { "dl", "pthread" }
-        if LIBEVENT_ROOT then
-            includedirs { LIBEVENT_ROOT.."/include" }
-            libdirs { LIBEVENT_ROOT.."/lib/" }
-        end
-        links { "event_pthreads" }
-        if BUILD_SQLITE then
-            includedirs { "../sqlite3" }
-        end
-        if BUILD_FREETYPE then
-            includedirs {"../freetype/include" }
-        else
-            includedirs { "/usr/include/freetype2" }
-        end
-    configuration { "not windows", "not macosx" }
-        links "GL"
-    configuration "linux"
-        linkoptions { "-static-libstdc++", "-static-libgcc", "-Wl,-rpath=./lib/" }
-        if BUILD_LUA then
-            links { "lua" }
-        else
-            links { "lua5.3-c++" }
-        end
-        links { "X11", "Xxf86vm" }
-        if USE_IRRKLANG then
-            links { "IrrKlang" }
-            libdirs { "../irrklang/bin/linux-gcc-64" }
-        end
-    configuration "macosx"
-        links { "lua", "z" }
-        libdirs { "../irrlicht" }
+    filter "not system:windows"
+        links { "event_pthreads", "dl", "pthread", "X11" }
+    filter "system:macosx"
+        links { "z" }
+        defines { "GL_SILENCE_DEPRECATION" }
         if MAC_ARM then
             buildoptions { "--target=arm64-apple-macos12" }
             linkoptions { "-arch arm64" }
         end
         if USE_IRRKLANG then
             links { "irrklang" }
-            libdirs { "../irrklang/bin/macosx-gcc" }
+        end
+    filter "system:linux"
+        links { "GL", "Xxf86vm" }
+        if USE_IRRKLANG then
+            links { "IrrKlang" }
+            linkoptions{ IRRKLANG_LINK_RPATH }
         end

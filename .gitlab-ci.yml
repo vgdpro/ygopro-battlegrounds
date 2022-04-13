@@ -140,13 +140,6 @@ exec_windows:
     - mat_common
     - mat_irrklang
     - mat_windows
-  variables:
-    YGOPRO_BUILD_LUA: '1'
-    YGOPRO_BUILD_SQLITE: '1'
-    YGOPRO_BUILD_FREETYPE: '1'
-    YGOPRO_BUILD_IRRLICHT: '1'
-    IRRKLANG_PRO: '1'
-    USE_IRRKLANG: '1'
   cache:
     key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
     paths:
@@ -155,8 +148,8 @@ exec_windows:
   script:
     - git submodule update --init
     - bash -c 'cp -rf premake/* .'
-    - '.\premake5.exe vs2019'
-    - cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\msbuild.exe" build\ygo.sln /m /p:Configuration=Release'
+    - '.\premake5.exe vs2019 --irrklang-pro'
+    - cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\msbuild.exe" build\YGOPro.sln /m /p:Configuration=Release'
     - copy bin\release\ygopro.exe .
   artifacts:
     paths:
@@ -166,12 +159,6 @@ exec_linux:
   stage: build
   tags:
     - linux
-  variables:
-    YGOPRO_BUILD_LUA: '1'
-    YGOPRO_BUILD_SQLITE: '1'
-    YGOPRO_BUILD_FREETYPE: '1'
-    YGOPRO_BUILD_IRRLICHT: '1'
-    USE_IRRKLANG: '1'
   dependencies:
     - mat_common
     - mat_irrklang
@@ -186,7 +173,7 @@ exec_linux:
     - git submodule update --init
     - mkdir lib
     - cp -rf irrklang/bin/linux-gcc-64/libIrrKlang.so ./lib/
-    - env YGOPRO_LIBEVENT_STATIC_PATH=$PWD/libevent-stable ./premake5 gmake
+    - ./premake5 gmake --build-freetype --build-sqlite --build-irrlicht --event-include-dir=$PWD/libevent-stable/include --event-lib-dir=$PWD/libevent-stable/lib
     - cd build
     - make config=release -j$(nproc)
     - cd ..
@@ -207,10 +194,6 @@ exec_macos_platform_x86:
     - mat_common
     - mat_macos_platform_x86
   variables:
-    YGOPRO_BUILD_LUA: '1'
-    YGOPRO_BUILD_SQLITE: '1'
-    YGOPRO_BUILD_FREETYPE: '1'
-    USE_IRRKLANG: '1'
     TARGET_PATFORM: x86
   cache:
     key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
@@ -233,9 +216,6 @@ exec_macos_platform_m1:
     - mat_common
     - mat_macos_platform_m1
   variables:
-    YGOPRO_BUILD_LUA: '1'
-    YGOPRO_BUILD_SQLITE: '1'
-    YGOPRO_BUILD_FREETYPE: '1'
     TARGET_PATFORM: m1
     YGOPRO_TARGET_ARM: '1'
   cache:
