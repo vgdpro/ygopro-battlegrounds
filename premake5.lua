@@ -58,12 +58,11 @@ if not os.getenv("YGOPRO_NO_XP_TOOLSET") then
 end
 
     configuration "bsd"
-        defines { "LUA_USE_POSIX" }
         includedirs { "/usr/local/include" }
         libdirs { "/usr/local/lib" }
 
     configuration "macosx"
-        defines { "LUA_USE_MACOSX", "DBL_MAX_10_EXP=+308", "DBL_MANT_DIG=53", "GL_SILENCE_DEPRECATION" }
+        defines { "GL_SILENCE_DEPRECATION" }
         if not LIBEVENT_ROOT then
             includedirs { "/usr/local/include/event2" }
             libdirs { "/usr/local/lib" }
@@ -75,7 +74,6 @@ end
         links { "OpenGL.framework", "Cocoa.framework", "IOKit.framework" }
 
     configuration "linux"
-        defines { "LUA_USE_LINUX" }
         buildoptions { "-U_FORTIFY_SOURCE" }
 
     configuration "Release"
