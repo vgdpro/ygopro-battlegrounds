@@ -16,7 +16,7 @@ mat_common:
   script:
     # lua
     - wget -O - https://cdn01.moecube.com/ygopro-build-materials/lua-5.3.5.tar.gz | tar zfx -
-    - mv lua-5.3.5/src lua
+    - mv lua-5.3.5 lua
     # sqlite3
     - wget -O - https://cdn01.moecube.com/ygopro-build-materials/sqlite-autoconf-3360000.tar.gz | tar zfx -
     - mv sqlite-autoconf-3360000 sqlite3
@@ -53,7 +53,7 @@ mat_linux:
   script:
     - apt update; apt -y install git wget tar
     - git clone --depth=1 https://code.mycard.moe/mycard/irrlicht-new irrlicht
-    - wget -O - https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-alpha14-linux.tar.gz | tar zfx -
+    - wget -O - https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta1-linux.tar.gz | tar zfx -
     - env PROCESSOR_COUNT=$(nproc) ./.ci/libevent-prebuild.sh
   artifacts:
     paths:
@@ -100,7 +100,7 @@ mat_macos:
     - linux
   script:
     - apt update; apt -y install wget tar
-    - wget -O - https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-alpha14-macosx.tar.gz | tar zfx -
+    - wget -O - https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta1-macosx.tar.gz | tar zfx -
     - wget -O - https://cdn01.moecube.com/ygopro-build-materials/libirrklang-patched-dylib.tar.gz | tar zfx -
     - mkdir irrlicht
     - cd irrlicht
@@ -119,11 +119,11 @@ mat_windows:
   script:
     - apt update; apt -y install wget tar patch p7zip-full
     # premake5.exe
-    - wget https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-alpha14-windows.zip
-    - 7z x -y premake-5.0.0-alpha14-windows.zip
+    - wget https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta1-windows.zip
+    - 7z x -y premake-5.0.0-beta1-windows.zip
     # event
     - wget -O - https://cdn01.moecube.com/ygopro-build-materials/libevent-2.0.22-stable.tar.gz | tar zfx -
-    - mv libevent-2.0.22-stable event ; cp -rf event/WIN32-Code/* event/include
+    - mv libevent-2.0.22-stable event
     # irrlicht
     - git clone --depth=1 https://code.mycard.moe/mycard/irrlicht-new irrlicht
   artifacts:
@@ -141,7 +141,7 @@ exec_windows:
     - mat_irrklang
     - mat_windows
   variables:
-    irrklang_pro: '1'
+    IRRKLANG_PRO: '1'
     USE_IRRKLANG: "1"
   cache:
     key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"

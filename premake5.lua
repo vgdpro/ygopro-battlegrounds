@@ -33,7 +33,7 @@ solution "ygo"
     end
     if (os.ishost("windows") or os.getenv("USE_IRRKLANG")) and not os.getenv("NO_IRRKLANG") then
         USE_IRRKLANG = true
-        if os.getenv("irrklang_pro") then
+        if os.getenv("IRRKLANG_PRO") then
             IRRKLANG_PRO = true
         end
     end
