@@ -1,4 +1,5 @@
 -- default global settings
+
 BUILD_LUA = true
 BUILD_EVENT = os.istarget("windows")
 BUILD_FREETYPE = os.istarget("windows")
@@ -8,107 +9,111 @@ USE_IRRKLANG = true
 IRRKLANG_PRO = false
 LUA_LIB_NAME = "lua"
 
--- read settings from command line
+-- read settings from command line or environment variables
 
-newoption { trigger = "build-lua", description = "" }
-newoption { trigger = "no-build-lua", description = "" }
-newoption { trigger = "lua-include-dir", description = "", value = "path" }
-newoption { trigger = "lua-lib-dir", description = "", value = "path" }
-newoption { trigger = "lua-lib-name", description = "", value = "name", default = "lua" }
+newoption { trigger = "build-lua", category = "YGOPro - lua", description = "" }
+newoption { trigger = "no-build-lua", category = "YGOPro - lua", description = "" }
+newoption { trigger = "lua-include-dir", category = "YGOPro - lua", description = "", value = "PATH" }
+newoption { trigger = "lua-lib-dir", category = "YGOPro - lua", description = "", value = "PATH" }
+newoption { trigger = "lua-lib-name", category = "YGOPro - lua", description = "", value = "NAME", default = "lua" }
 
-newoption { trigger = "build-event", description = "" }
-newoption { trigger = "no-build-event", description = "" }
-newoption { trigger = "event-include-dir", description = "", value = "path" }
-newoption { trigger = "event-lib-dir", description = "", value = "path" }
+newoption { trigger = "build-event", category = "YGOPro - event", description = "" }
+newoption { trigger = "no-build-event", category = "YGOPro - event", description = "" }
+newoption { trigger = "event-include-dir", category = "YGOPro - event", description = "", value = "PATH" }
+newoption { trigger = "event-lib-dir", category = "YGOPro - event", description = "", value = "PATH" }
 
-newoption { trigger = "build-freetype", description = "" }
-newoption { trigger = "no-build-freetype", description = "" }
-newoption { trigger = "freetype-include-dir", description = "", value = "path" }
-newoption { trigger = "freetype-lib-dir", description = "", value = "path" }
+newoption { trigger = "build-freetype", category = "YGOPro - freetype", description = "" }
+newoption { trigger = "no-build-freetype", category = "YGOPro - freetype", description = "" }
+newoption { trigger = "freetype-include-dir", category = "YGOPro - freetype", description = "", value = "PATH" }
+newoption { trigger = "freetype-lib-dir", category = "YGOPro - freetype", description = "", value = "PATH" }
 
-newoption { trigger = "build-sqlite", description = "" }
-newoption { trigger = "no-build-sqlite", description = "" }
-newoption { trigger = "sqlite-include-dir", description = "", value = "path" }
-newoption { trigger = "sqlite-lib-dir", description = "", value = "path" }
+newoption { trigger = "build-sqlite", category = "YGOPro - sqlite", description = "" }
+newoption { trigger = "no-build-sqlite", category = "YGOPro - sqlite", description = "" }
+newoption { trigger = "sqlite-include-dir", category = "YGOPro - sqlite", description = "", value = "PATH" }
+newoption { trigger = "sqlite-lib-dir", category = "YGOPro - sqlite", description = "", value = "PATH" }
 
-newoption { trigger = "build-irrlicht", description = "" }
-newoption { trigger = "no-build-irrlicht", description = "" }
-newoption { trigger = "irrlicht-include-dir", description = "", value = "path" }
-newoption { trigger = "irrlicht-lib-dir", description = "", value = "path" }
+newoption { trigger = "build-irrlicht", category = "YGOPro - irrlicht", description = "" }
+newoption { trigger = "no-build-irrlicht", category = "YGOPro - irrlicht", description = "" }
+newoption { trigger = "irrlicht-include-dir", category = "YGOPro - irrlicht", description = "", value = "PATH" }
+newoption { trigger = "irrlicht-lib-dir", category = "YGOPro - irrlicht", description = "", value = "PATH" }
 
-newoption { trigger = "use-irrklang", description = "" }
-newoption { trigger = "no-use-irrklang", description = "" }
-newoption { trigger = "irrklang-include-dir", description = "", value = "path" }
-newoption { trigger = "irrklang-lib-dir", description = "", value = "path" }
+newoption { trigger = "use-irrklang", category = "YGOPro - irrklang", description = "" }
+newoption { trigger = "no-use-irrklang", category = "YGOPro - irrklang", description = "" }
+newoption { trigger = "irrklang-include-dir", category = "YGOPro - irrklang", description = "", value = "PATH" }
+newoption { trigger = "irrklang-lib-dir", category = "YGOPro - irrklang", description = "", value = "PATH" }
 
-newoption { trigger = "irrklang-pro", description = "" }
-newoption { trigger = "no-irrklang-pro", description = "" }
-newoption { trigger = "irrklang-pro-release-lib-dir", description = "", value = "path" }
-newoption { trigger = "irrklang-pro-debug-lib-dir", description = "", value = "path" }
+newoption { trigger = "irrklang-pro", category = "YGOPro - irrklang - pro", description = "" }
+newoption { trigger = "no-irrklang-pro", category = "YGOPro - irrklang - pro", description = "" }
+newoption { trigger = "irrklang-pro-release-lib-dir", category = "YGOPro - irrklang - pro", description = "", value = "PATH" }
+newoption { trigger = "irrklang-pro-debug-lib-dir", category = "YGOPro - irrklang - pro", description = "", value = "PATH" }
 
-newoption { trigger = "winxp-support", description = "" }
-newoption { trigger = "mac-arm", description = "M1" }
+newoption { trigger = "winxp-support", category = "YGOPro", description = "" }
+newoption { trigger = "mac-arm", category = "YGOPro", description = "M1" }
 
-if(_OPTIONS["build-lua"]) then
+function GetParam(param)
+    return _OPTIONS[param] or os.getenv(string.upper(string.gsub(param,"-","_")))
+end
+
+if GetParam("build-lua") then
     BUILD_LUA = true
-elseif(_OPTIONS["no-build-lua"]) then
+elseif GetParam("no-build-lua") then
     BUILD_LUA = false
 end
 if not BUILD_LUA then
     -- at most times you need to change this if you change BUILD_LUA to false
     -- make sure your lua lib is built with C++ and version >= 5.3
-    LUA_INCLUDE_DIR = _OPTIONS["lua-include-dir"] or "/usr/local/include/lua"
-    LUA_LIB_DIR = _OPTIONS["lua-lib-dir"] or "/usr/local/lib"
-    LUA_LIB_NAME = _OPTIONS["lua-lib-name"]
+    LUA_INCLUDE_DIR = GetParam("lua-include-dir") or "/usr/local/include/lua"
+    LUA_LIB_DIR = GetParam("lua-lib-dir") or "/usr/local/lib"
+    LUA_LIB_NAME = GetParam("lua-lib-name")
 end
 
-if(_OPTIONS["build-event"]) then
+if GetParam("build-event") then
     BUILD_EVENT = os.istarget("windows") -- only on windows for now
-elseif(_OPTIONS["no-build-event"]) then
+elseif GetParam("no-build-event") then
     BUILD_EVENT = false
 end
 if not BUILD_EVENT then
-    EVENT_INCLUDE_DIR = _OPTIONS["event-include-dir"] or "/usr/local/include/event2"
-    EVENT_LIB_DIR = _OPTIONS["event-lib-dir"] or "/usr/local/lib"
+    EVENT_INCLUDE_DIR = GetParam("event-include-dir") or "/usr/local/include/event2"
+    EVENT_LIB_DIR = GetParam("event-lib-dir") or "/usr/local/lib"
 end
 
-if(_OPTIONS["build-freetype"]) then
+if GetParam("build-freetype") then
     BUILD_FREETYPE = true
-elseif(_OPTIONS["no-build-freetype"]) then
+elseif GetParam("no-build-freetype") then
     BUILD_FREETYPE = false
 end
 if not BUILD_FREETYPE then
-    FREETYPE_INCLUDE_DIR = _OPTIONS["freetype-include-dir"] or "/usr/local/include/freetype2"
-    FREETYPE_LIB_DIR = _OPTIONS["freetype-lib-dir"] or "/usr/local/lib"
+    FREETYPE_INCLUDE_DIR = GetParam("freetype-include-dir") or "/usr/local/include/freetype2"
+    FREETYPE_LIB_DIR = GetParam("freetype-lib-dir") or "/usr/local/lib"
 end
 
-if(_OPTIONS["build-sqlite"]) then
+if GetParam("build-sqlite") then
     BUILD_SQLITE = true
-elseif(_OPTIONS["no-build-sqlite"]) then
+elseif GetParam("no-build-sqlite") then
     BUILD_SQLITE = false
 end
 if not BUILD_SQLITE then
-    SQLITE_INCLUDE_DIR = _OPTIONS["sqlite-include-dir"] or "/usr/local/include"
-    SQLITE_LIB_DIR = _OPTIONS["sqlite-lib-dir"] or "/usr/local/lib"
+    SQLITE_INCLUDE_DIR = GetParam("sqlite-include-dir") or "/usr/local/include"
+    SQLITE_LIB_DIR = GetParam("sqlite-lib-dir") or "/usr/local/lib"
 end
 
-if(_OPTIONS["build-irrlicht"]) then
+if GetParam("build-irrlicht") then
     BUILD_IRRLICHT = true
-elseif(_OPTIONS["no-build-irrlicht"]) then
+elseif GetParam("no-build-irrlicht") then
     BUILD_IRRLICHT = false
 end
 if not BUILD_IRRLICHT then
-    IRRLICHT_INCLUDE_DIR = _OPTIONS["irrlicht-include-dir"] or "/usr/local/include/irrlicht"
-    IRRLICHT_LIB_DIR = _OPTIONS["irrlicht-lib-dir"] or "/usr/local/lib"
+    IRRLICHT_INCLUDE_DIR = GetParam("irrlicht-include-dir") or "/usr/local/include/irrlicht"
+    IRRLICHT_LIB_DIR = GetParam("irrlicht-lib-dir") or "/usr/local/lib"
 end
 
-if(_OPTIONS["use-irrklang"]) then
+if GetParam("use-irrklang") then
     USE_IRRKLANG = true
-elseif(_OPTIONS["no-use-irrklang"] or os.getenv("NO_USE_IRRKLANG")) then
+elseif GetParam("no-use-irrklang") then
     USE_IRRKLANG = false
 end
 if USE_IRRKLANG then
-    IRRKLANG_INCLUDE_DIR = _OPTIONS["irrklang-include-dir"] or "../irrklang/include"
+    IRRKLANG_INCLUDE_DIR = GetParam("irrklang-include-dir") or "../irrklang/include"
     if os.istarget("windows") then
         IRRKLANG_LIB_DIR = "../irrklang/lib/Win32-visualStudio"
     elseif os.istarget("linux") then
@@ -117,24 +122,24 @@ if USE_IRRKLANG then
     elseif os.istarget("macosx") then
         IRRKLANG_LIB_DIR = "../irrklang/bin/macosx-gcc"
     end
-    IRRKLANG_LIB_DIR = _OPTIONS["irrklang-lib-dir"] or IRRKLANG_LIB_DIR
+    IRRKLANG_LIB_DIR = GetParam("irrklang-lib-dir") or IRRKLANG_LIB_DIR
 end
 
-if(_OPTIONS["irrklang-pro"]) and os.istarget("windows") then
+if GetParam("irrklang-pro") and os.istarget("windows") then
     IRRKLANG_PRO = true
-elseif(_OPTIONS["no-irrklang-pro"]) then
+elseif GetParam("no-irrklang-pro") then
     IRRKLANG_PRO = false
 end
 if IRRKLANG_PRO then
     -- irrklang pro can't use the pro lib to debug
-    IRRKLANG_PRO_RELEASE_LIB_DIR = _OPTIONS["irrklang-pro-release-lib-dir"] or "../irrklang/lib/Win32-vs2019"
-    IRRKLANG_PRO_DEBUG_LIB_DIR = _OPTIONS["irrklang-pro-debug-lib-dir"] or "../irrklang/lib/Win32-visualStudio-debug"  
+    IRRKLANG_PRO_RELEASE_LIB_DIR = GetParam("irrklang-pro-release-lib-dir") or "../irrklang/lib/Win32-vs2019"
+    IRRKLANG_PRO_DEBUG_LIB_DIR = GetParam("irrklang-pro-debug-lib-dir") or "../irrklang/lib/Win32-visualStudio-debug"  
 end
 
-if(_OPTIONS["winxp-support"]) and os.istarget("windows") then
+if GetParam("winxp-support") and os.istarget("windows") then
     WINXP_SUPPORT = true
 end
-if(_OPTIONS["mac-arm"] or os.getenv("YGOPRO_TARGET_ARM")) and os.istarget("macosx") then
+if (GetParam("mac-arm") and os.istarget("macosx") then
     MAC_ARM = true
 end
 
