@@ -6,7 +6,7 @@ project "YGOPro"
 
     files { "*.cpp", "*.h" }
     includedirs { "../ocgcore" }
-    links { "ocgcore", "clzma", "cspmemvfs", LUA_LIB_NAME, "sqlite3", "Irrlicht", "freetype", "event" }
+    links { "ocgcore", "clzma", "cspmemvfs", LUA_LIB_NAME, "sqlite3", "irrlicht", "freetype", "event" }
 
     if BUILD_EVENT then
         includedirs { "../event/include" }
