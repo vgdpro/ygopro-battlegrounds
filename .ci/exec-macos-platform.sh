@@ -8,6 +8,7 @@ export YGOPRO_LIBEVENT_STATIC_PATH=$PWD/libevent-stable
 git submodule update --init
 
 ./premake5 gmake --cc=clang
+cat ./build/lua.make
 cd build
 make config=release -j4
 cd ..
