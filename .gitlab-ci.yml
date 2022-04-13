@@ -177,7 +177,7 @@ exec_linux:
     - cd build
     - make config=release -j$(nproc)
     - cd ..
-    - mv bin/release/ygopro .
+    - mv bin/release/YGOPro ./ygopro
     - strip ygopro
   artifacts:
     paths:
