@@ -218,6 +218,7 @@ exec_macos_platform_m1:
   variables:
     TARGET_PATFORM: m1
     YGOPRO_TARGET_ARM: '1'
+    NO_USE_IRRKLANG: '1'
   cache:
     key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
     paths:

@@ -104,7 +104,7 @@ end
 
 if(_OPTIONS["use-irrklang"]) then
     USE_IRRKLANG = true
-elseif(_OPTIONS["no-use-irrklang"]) then
+elseif(_OPTIONS["no-use-irrklang"] or os.getenv("NO_USE_IRRKLANG")) then
     USE_IRRKLANG = false
 end
 if USE_IRRKLANG then
