@@ -173,6 +173,7 @@ exec_linux:
     - git submodule update --init
     - mkdir lib
     - cp -rf irrklang/bin/linux-gcc-64/libIrrKlang.so ./lib/
+    - cp -rf irrklang/bin/linux-gcc-64/ikpMP3.so ./lib/
     - export EVENT_INCLUDE_DIR=$PWD/libevent-stable/include
     - export EVENT_LIB_DIR=$PWD/libevent-stable/lib
     - ./premake5 gmake --build-freetype --build-sqlite --build-irrlicht
