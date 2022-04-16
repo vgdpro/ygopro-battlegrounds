@@ -171,7 +171,7 @@ workspace "YGOPro"
         libdirs { "/usr/local/lib" }
         buildoptions { "-stdlib=libc++" }
         if MAC_ARM then
-            buildoptions { "--target=arm64-apple-macos11" }
+            buildoptions { "--target=arm64-apple-macos12" }
         end
         links { "OpenGL.framework", "Cocoa.framework", "IOKit.framework" }
 
