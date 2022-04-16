@@ -46,7 +46,7 @@ newoption { trigger = "irrklang-pro", category = "YGOPro - irrklang - pro", desc
 newoption { trigger = "no-irrklang-pro", category = "YGOPro - irrklang - pro", description = "" }
 newoption { trigger = "irrklang-pro-release-lib-dir", category = "YGOPro - irrklang - pro", description = "", value = "PATH" }
 newoption { trigger = "irrklang-pro-debug-lib-dir", category = "YGOPro - irrklang - pro", description = "", value = "PATH" }
-newoption { trigger = 'build-ikpmp3', category = "YGOPro - irrklang - ikpmp3", description = "", value = "PATH" }
+newoption { trigger = 'build-ikpmp3', category = "YGOPro - irrklang - ikpmp3", description = "" }
 
 newoption { trigger = "winxp-support", category = "YGOPro", description = "" }
 newoption { trigger = "mac-arm", category = "YGOPro", description = "M1" }
