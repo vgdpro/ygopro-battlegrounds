@@ -202,7 +202,7 @@ exec_macos_platform_x86:
 exec_macos_platform_m1:
   extends: .exec_macos_platform
   tags:
-    - macos
+    - macos-m1
 
 exec_macos:
   stage: combine
