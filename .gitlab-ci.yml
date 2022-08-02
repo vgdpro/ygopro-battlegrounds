@@ -31,6 +31,19 @@ mat_common:
       - freetype
       - sqlite3
 
+mat_submodules:
+  stage: prepare
+  tags: 
+    - linux
+  script:
+    - rm -rf ocgcore script
+    - mkdir ocgcore script
+    - git submodule update --init
+  artifacts:
+    paths:
+      - ocgcore
+      - script
+
 mat_irrklang:
   stage: prepare
   tags:
@@ -61,28 +74,6 @@ mat_linux:
       - irrlicht
       - libevent-stable
 
-mat_macos_platform_x86:
-  stage: prepare
-  tags:
-    - macos
-  variables:
-    PROCESSOR_COUNT: '4'
-  script: ./.ci/libevent-prebuild.sh
-  artifacts:
-    paths:
-      - libevent-stable
-
-mat_macos_platform_m1:
-  stage: prepare
-  tags:
-    - linux
-  script:
-    - wget -O - https://cdn01.moecube.com/ygopro-build-materials/libevent-m1mac.tar.gz | tar zfx -
-  artifacts:
-    paths:
-      - libevent-stable
-
-
 #mat_macos_irrklang_patched:
 #  stage: build
 #  tags:
@@ -101,7 +92,7 @@ mat_macos:
   script:
     - apt update; apt -y install wget tar
     - wget -O - https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta1-macosx.tar.gz | tar zfx -
-    - wget -O - https://cdn01.moecube.com/ygopro-build-materials/libirrklang-patched-dylib.tar.gz | tar zfx -
+    # - wget -O - https://cdn01.moecube.com/ygopro-build-materials/libirrklang-patched-dylib.tar.gz | tar zfx -
     - mkdir irrlicht
     - cd irrlicht
     - wget -O - https://cdn01.moecube.com/ygopro-build-materials/irrlicht-mycard-mac.tar.gz | tar zfx -
@@ -140,13 +131,13 @@ exec_windows:
     - mat_common
     - mat_irrklang
     - mat_windows
+    - mat_submodules
   cache:
     key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
     paths:
       - bin/
       - obj/
   script:
-    - git submodule update --init
     - bash -c 'cp -rf premake/* .'
     - '.\premake5.exe vs2019 --irrklang-pro'
     - cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\msbuild.exe" build\YGOPro.sln /m /p:Configuration=Release'
@@ -163,6 +154,7 @@ exec_linux:
     - mat_common
     - mat_irrklang
     - mat_linux
+    - mat_submodules
   cache:
     key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
     paths:
@@ -170,7 +162,6 @@ exec_linux:
       - obj/
   script:
     - apt update; apt -y install git build-essential libgl1-mesa-dev libglu-dev libxxf86vm-dev
-    - git submodule update --init
     - mkdir lib
     - cp -rf irrklang/bin/linux-gcc-64/libIrrKlang.so ./lib/
     # - cp -rf irrklang/bin/linux-gcc-64/ikpMP3.so ./lib/
@@ -187,18 +178,12 @@ exec_linux:
       - ygopro
       - lib
 
-exec_macos_platform_x86:
+.exec_macos_platform:
   stage: build
-  tags:
-    - macos
   dependencies:
-    #- mat_irrklang
     - mat_macos
     - mat_common
-    - mat_macos_platform_x86
-  variables:
-    TARGET_PLATFORM: x86
-    NO_USE_IRRKLANG: '1'
+    - mat_submodules
   cache:
     key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
     paths:
@@ -208,28 +193,16 @@ exec_macos_platform_x86:
   artifacts:
     paths:
       - ygopro-platforms
+
+exec_macos_platform_x86:
+  extends: .exec_macos_platform
+  tags:
+    - macos
       
 exec_macos_platform_m1:
-  stage: build
+  extends: .exec_macos_platform
   tags:
     - macos
-  dependencies:
-    - mat_macos
-    - mat_common
-    - mat_macos_platform_m1
-  variables:
-    TARGET_PLATFORM: m1
-    MAC_ARM: '1'
-    NO_USE_IRRKLANG: '1'
-  cache:
-    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
-    paths:
-      - bin/
-      - obj/
-  script: ./.ci/exec-macos-platform.sh
-  artifacts:
-    paths:
-      - ygopro-platforms
 
 exec_macos:
   stage: combine
@@ -241,7 +214,7 @@ exec_macos:
     #- mat_macos_irrklang_patched
   script:
     - mkdir -p ygopro.app/Contents/MacOS ygopro.app/Contents/Frameworks;
-    - lipo -create -output ygopro.app/Contents/MacOS/ygopro ygopro-platforms/ygopro-platform-x86 ygopro-platforms/ygopro-platform-m1;
+    - lipo -create -output ygopro.app/Contents/MacOS/ygopro $(ls -1 ygopro-platforms/ygopro-platform-*);
     # do some special things for irrklang
    # - mv ./libirrklang-patched.dylib ygopro.app/Contents/Frameworks/libirrklang.dylib 
     #- install_name_tool -change /usr/local/lib/libirrklang.dylib @executable_path/../Frameworks/libirrklang.dylib ygopro.app/Contents/MacOS/ygopro
@@ -358,6 +331,7 @@ assets_en-US:
       - pics
       - cards.cdb
       - strings.conf
+      - mat_submodules
   only:
     - tags
     - gitlabci
@@ -371,6 +345,7 @@ pack_windows_zh-CN:
     - assets_windows
     - exec_windows
     - assets_zh-CN
+    - mat_submodules
   script: ./.ci/pack-windows.sh
   variables:
     TARGET_LOCALE: zh-CN
@@ -390,6 +365,7 @@ pack_windows_zh-CN:
     - assets_windows
     - exec_windows
     - assets_zh-CN
+    - mat_submodules
   script: ./.ci/pack-windows.sh
   variables:
     TARGET_LOCALE: zh-CN
@@ -409,6 +385,7 @@ pack_windows_en-US:
     - assets_windows
     - exec_windows
     - assets_en-US
+    - mat_submodules
   script: ./.ci/pack-windows.sh
   variables:
     TARGET_LOCALE: en-US
@@ -428,6 +405,7 @@ pack_linux_zh-CN:
     - assets_nonwindows
     - exec_linux
     - assets_zh-CN
+    - mat_submodules
   script: ./.ci/pack-linux.sh
   variables:
     TARGET_LOCALE: zh-CN
@@ -447,6 +425,7 @@ pack_linux_en-US:
     - assets_nonwindows
     - exec_linux
     - assets_en-US
+    - mat_submodules
   script: ./.ci/pack-linux.sh
   variables:
     TARGET_LOCALE: en-US
@@ -466,6 +445,7 @@ pack_macos_zh-CN:
     - assets_nonwindows
     - exec_macos
     - assets_zh-CN
+    - mat_submodules
   script: ./.ci/pack-macos.sh
   variables:
     TARGET_LOCALE: zh-CN
@@ -485,6 +465,7 @@ pack_macos_en-US:
     - assets_nonwindows
     - exec_macos
     - assets_en-US
+    - mat_submodules
   script: ./.ci/pack-macos.sh
   variables:
     TARGET_LOCALE: en-US
