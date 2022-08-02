@@ -148,7 +148,10 @@ if GetParam("winxp-support") and os.istarget("windows") then
     WINXP_SUPPORT = true
 end
 if os.istarget("macosx") then
-    MAC_ARM = true
+    MAC_ARM = false
+    if GetParam("mac-arm") then
+        MAC_ARM = true
+    end
     ON_MAC_ARM = MAC_ARM or io.popen('arch'):read('*l') == "arm64"
 end
 
