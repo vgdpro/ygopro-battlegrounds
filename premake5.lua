@@ -147,8 +147,9 @@ BUILD_IKPMP3 = USE_IRRKLANG and (GetParam("build-ikpmp3") or IRRKLANG_PRO)
 if GetParam("winxp-support") and os.istarget("windows") then
     WINXP_SUPPORT = true
 end
-if GetParam("mac-arm") and os.istarget("macosx") then
+if os.istarget("macosx") then
     MAC_ARM = true
+    ON_MAC_ARM = MAC_ARM or io.popen('arch'):read('*l') == "arm64"
 end
 
 workspace "YGOPro"
@@ -198,7 +199,7 @@ workspace "YGOPro"
     filter { "configurations:Release", "not action:vs*" }
         symbols "On"
         defines "NDEBUG"
-        if not MAC_ARM then
+        if not ON_MAC_ARM then
             buildoptions "-march=native"
         end
 
