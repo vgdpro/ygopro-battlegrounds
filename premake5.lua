@@ -202,7 +202,7 @@ workspace "YGOPro"
     filter { "configurations:Release", "not action:vs*" }
         symbols "On"
         defines "NDEBUG"
-        if not ON_MAC_ARM then
+        if not MAC_ARM then
             buildoptions "-march=native"
         end
 

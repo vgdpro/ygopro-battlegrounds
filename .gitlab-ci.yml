@@ -91,6 +91,7 @@ mat_macos:
     - linux
   script:
     - apt update; apt -y install wget tar
+    - wget -O - https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta1-macosx.tar.gz | tar zfx -
     # - wget -O - https://cdn01.moecube.com/ygopro-build-materials/libirrklang-patched-dylib.tar.gz | tar zfx -
     - mkdir irrlicht
     - cd irrlicht
@@ -98,6 +99,7 @@ mat_macos:
     - cd ..
   artifacts:
     paths:
+      - premake5
       - irrlicht
 
 mat_windows:
@@ -200,6 +202,8 @@ exec_macos_platform_m1:
   extends: .exec_macos_platform
   tags:
     - macos-m1
+  variables:
+    MAC_ARM: 1
 
 exec_macos:
   stage: combine
