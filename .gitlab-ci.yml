@@ -98,7 +98,6 @@ mat_macos:
     - cd ..
   artifacts:
     paths:
-      - libirrklang-patched.dylib
       - irrlicht
 
 mat_windows:
