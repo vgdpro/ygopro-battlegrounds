@@ -249,7 +249,7 @@ assets:
   tags:
     - linux
   script:
-    - apt update; apt -y install tar wget
+    - apt update; apt -y install tar wget git
     # starter pack
     - wget -O - https://code.mycard.moe/mycard/ygopro-starter-pack/-/archive/master/ygopro-starter-pack-master.tar.gz | tar zfx -
     - mv ygopro-starter-pack-master/* .
@@ -261,12 +261,16 @@ assets:
     - cd fonts
     - wget -O - https://cdn01.moecube.com/ygopro-fonts.tar.gz | tar zfx -
     - cd ..
+    # pack
+    - git clone --depth=1 https://code.mycard.moe/mycard/ygopro-card-list
+    - mv ygopro-card-list/pack .
   artifacts:
     paths:
       - deck
       - single
       - sound
       - fonts
+      - pack
   only:
     - tags
     - gitlabci
