@@ -66,31 +66,33 @@ struct Config {
 };
 
 struct DuelInfo {
-	bool isStarted;
-	bool isFinished;
-	bool isReplay;
-	bool isReplaySkiping;
-	bool isFirst;
-	bool isTag;
-	bool isSingleMode;
-	bool is_shuffling;
-	bool tag_player[2];
-	int lp[2];
-	int start_lp;
-	int duel_rule;
-	int turn;
-	short curMsg;
-	wchar_t hostname[20];
-	wchar_t clientname[20];
-	wchar_t hostname_tag[20];
-	wchar_t clientname_tag[20];
-	wchar_t strLP[2][16];
-	wchar_t* vic_string;
-	unsigned char player_type;
-	unsigned char time_player;
-	unsigned short time_limit;
-	unsigned short time_left[2];
-	bool isReplaySwapped;
+	bool isStarted{ false };
+	bool isFinished{ false };
+	bool isReplay{ false };
+	bool isReplaySkiping{ false };
+	bool isFirst{ false };
+	bool isTag{ false };
+	bool isSingleMode{ false };
+	bool is_shuffling{ false };
+	bool tag_player[2]{ false };
+	bool isReplaySwapped{ false };
+	int lp[2]{ 0 };
+	int start_lp{ 0 };
+	int duel_rule{ 0 };
+	int turn{ 0 };
+	short curMsg{ 0 };
+	wchar_t hostname[20]{ 0 };
+	wchar_t clientname[20]{ 0 };
+	wchar_t hostname_tag[20]{ 0 };
+	wchar_t clientname_tag[20]{ 0 };
+	wchar_t strLP[2][16]{ 0 };
+	wchar_t* vic_string{ 0 };
+	unsigned char player_type{ 0 };
+	unsigned char time_player{ 0 };
+	unsigned short time_limit{ 0 };
+	unsigned short time_left[2]{ 0 };
+
+	void Clear();
 };
 
 struct BotInfo {
@@ -593,6 +595,8 @@ extern Game* mainGame;
 
 }
 
+#define SIZE_QUERY_BUFFER	0x4000
+
 #define CARD_IMG_WIDTH		177
 #define CARD_IMG_HEIGHT		254
 #define CARD_THUMB_WIDTH	44
@@ -801,13 +805,27 @@ extern Game* mainGame;
 #define BUTTON_BIG_CARD_ZOOM_OUT	382
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
 
+//STOC_GAME_MSG messages
+#define MSG_WAITING				3
+#define MSG_START				4
+#define MSG_UPDATE_DATA			6	// flag=0: clear
+#define MSG_UPDATE_CARD			7	// flag=QUERY_CODE, code=0: clear
+#define MSG_REQUEST_DECK		8
+#define MSG_REFRESH_DECK		34
+#define MSG_CARD_SELECTED		80
+#define MSG_UNEQUIP				95
+#define MSG_BE_CHAIN_TARGET		121
+#define MSG_CREATE_RELATION		122
+#define MSG_RELEASE_RELATION	123
+
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2
 #define AVAIL_CUSTOM				0x4
 #define AVAIL_SC					0x8
 #define AVAIL_OCGTCG				(AVAIL_OCG|AVAIL_TCG)
 
-#define DEFAULT_DUEL_RULE			5
+#define DEFAULT_DUEL_RULE	5
 
 #define CARD_ARTWORK_VERSIONS_OFFSET	10
+#define MAX_LAYER_COUNT	6
 #endif // GAME_H
