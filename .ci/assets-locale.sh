@@ -8,4 +8,4 @@ cp -rf ./ygopro-database/locales/$TARGET_LOCALE/* .
 # ygopro-images
 mkdir pics
 # skip it in develop branch
-# wget -O - https://cdn01.moecube.com/images/ygopro-images-${TARGET_LOCALE}.zip | bsdtar -C pics -xf -
+wget -O - https://cdn01.moecube.com/images/ygopro-images-${TARGET_LOCALE}.zip | bsdtar -C pics -xf -
