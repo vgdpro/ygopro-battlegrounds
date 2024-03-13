@@ -81,9 +81,6 @@ bool Game::Initialize() {
 	is_building = false;
 	menuHandler.prev_operation = 0;
 	menuHandler.prev_sel = -1;
-	for (int i = 0; i < 8; ++i) {
-		chatTiming[i] = 0;
-	}
 	deckManager.LoadLFList();
 	driver = device->getVideoDriver();
 	driver->setTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS, false);
@@ -1228,7 +1225,7 @@ void Game::RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBo
 }
 void Game::RefreshDeck(const wchar_t* deckpath, const std::function<void(const wchar_t*)>& additem) {
 	if(!mywcsncasecmp(deckpath, L"./pack", 6)) {
-		for(auto pack : deckBuilder.expansionPacks) {
+		for(auto& pack : deckBuilder.expansionPacks) {
 			additem(pack.substr(5, pack.size() - 9).c_str());
 		}
 	}
@@ -1315,57 +1312,6 @@ void Game::LoadConfig() {
 	char strbuf[32];
 	char valbuf[256];
 	wchar_t wstr[256];
-	gameConf.use_d3d = 0;
-	gameConf.use_image_scale = 1;
-	gameConf.antialias = 0;
-	gameConf.serverport = 7911;
-	gameConf.textfontsize = 14;
-	gameConf.nickname[0] = 0;
-	gameConf.gamename[0] = 0;
-	gameConf.lastcategory[0] = 0;
-	gameConf.lastdeck[0] = 0;
-	gameConf.numfont[0] = 0;
-	gameConf.textfont[0] = 0;
-	gameConf.lasthost[0] = 0;
-	gameConf.lastport[0] = 0;
-	gameConf.roompass[0] = 0;
-	gameConf.bot_deck_path[0] = 0;
-	//settings
-	gameConf.chkMAutoPos = 0;
-	gameConf.chkSTAutoPos = 1;
-	gameConf.chkRandomPos = 0;
-	gameConf.chkAutoChain = 0;
-	gameConf.chkWaitChain = 0;
-	gameConf.chkDefaultShowChain = 0;
-	gameConf.chkIgnore1 = 0;
-	gameConf.chkIgnore2 = 0;
-	gameConf.use_lflist = 1;
-	gameConf.default_lflist = 0;
-	gameConf.default_rule = DEFAULT_DUEL_RULE;
-	gameConf.hide_setname = 0;
-	gameConf.hide_hint_button = 0;
-	gameConf.control_mode = 0;
-	gameConf.draw_field_spell = 1;
-	gameConf.separate_clear_button = 1;
-	gameConf.auto_search_limit = -1;
-	gameConf.search_multiple_keywords = 1;
-	gameConf.chkIgnoreDeckChanges = 0;
-	gameConf.defaultOT = 1;
-	gameConf.enable_bot_mode = 0;
-	gameConf.quick_animation = 0;
-	gameConf.auto_save_replay = 0;
-	gameConf.draw_single_chain = 0;
-	gameConf.hide_player_name = 0;
-	gameConf.prefer_expansion_script = 0;
-	gameConf.enable_sound = true;
-	gameConf.sound_volume = 0.5;
-	gameConf.enable_music = true;
-	gameConf.music_volume = 0.5;
-	gameConf.music_mode = 1;
-	gameConf.window_maximized = false;
-	gameConf.window_width = 1024;
-	gameConf.window_height = 640;
-	gameConf.resize_popup_menu = false;
 	while(fgets(linebuf, 256, fp)) {
 		sscanf(linebuf, "%s = %s", strbuf, valbuf);
 		if(!strcmp(strbuf, "antialias")) {
@@ -1572,32 +1518,41 @@ void Game::SaveConfig() {
 void Game::ShowCardInfo(int code, bool resize) {
 	if(showingcode == code && !resize)
 		return;
-	CardData cd;
 	wchar_t formatBuffer[256];
-	dataManager.GetData(code, &cd);
+	auto cit = dataManager.GetCodePointer(code);
+	bool is_valid = (cit != dataManager.datas_end);
 	imgCard->setImage(imageManager.GetTexture(code, true));
-	if(cd.alias != 0 && (cd.alias - code < CARD_ARTWORK_VERSIONS_OFFSET || code - cd.alias < CARD_ARTWORK_VERSIONS_OFFSET))
-		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
-	else myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+	if (is_valid) {
+		auto& cd = cit->second;
+		if (cd.is_alternative())
+			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
+		else
+			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+	}
+	else {
+		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+	}
 	stName->setText(formatBuffer);
 	int offset = 0;
-	if(!gameConf.hide_setname) {
-		unsigned long long sc = cd.setcode;
-		if(cd.alias) {
-			auto aptr = dataManager._datas.find(cd.alias);
-			if(aptr != dataManager._datas.end())
-				sc = aptr->second.setcode;
+	if (is_valid && !gameConf.hide_setname) {
+		auto& cd = cit->second;
+		auto target = cit;
+		if (cd.alias && dataManager.GetCodePointer(cd.alias) != dataManager.datas_end) {
+			target = dataManager.GetCodePointer(cd.alias);
 		}
-		if(sc) {
+		if (target->second.setcode[0]) {
 			offset = 23;// *yScale;
-			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), dataManager.FormatSetName(sc));
+			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), dataManager.FormatSetName(target->second.setcode));
 			stSetName->setText(formatBuffer);
-		} else
+		}
+		else
 			stSetName->setText(L"");
-	} else {
+	}
+	else {
 		stSetName->setText(L"");
 	}
-	if(cd.type & TYPE_MONSTER) {
+	if(is_valid && cit->second.type & TYPE_MONSTER) {
+		auto& cd = cit->second;
 		myswprintf(formatBuffer, L"[%ls] %ls/%ls", dataManager.FormatType(cd.type), dataManager.FormatRace(cd.race), dataManager.FormatAttribute(cd.attribute));
 		stInfo->setText(formatBuffer);
 		int offset_info = 0;
@@ -1643,8 +1598,12 @@ void Game::ShowCardInfo(int code, bool resize) {
 		stSetName->setRelativePosition(rect<s32>(15, (83 + offset_arrows), 296 * xScale, (83 + offset_arrows) + offset));
 		stText->setRelativePosition(rect<s32>(15, (83 + offset_arrows) + offset, 287 * xScale, 324 * yScale));
 		scrCardText->setRelativePosition(rect<s32>(287 * xScale - 20, (83 + offset_arrows) + offset, 287 * xScale, 324 * yScale));
-	} else {
-		myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cd.type));
+	}
+	else {
+		if (is_valid)
+			myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cit->second.type));
+		else
+			myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(0));
 		stInfo->setText(formatBuffer);
 		stDataInfo->setText(L"");
 		stSetName->setRelativePosition(rect<s32>(15, 60, 296 * xScale, 60 + offset));
