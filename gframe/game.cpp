@@ -1778,21 +1778,13 @@ int Game::LocalPlayer(int player) const {
 	int pid = player ? 1 : 0;
 	return dInfo.isFirst ? pid : 1 - pid;
 }
-int Game::OppositePlayer(int player) const {
-	if(dInfo.isTag) {
-		if(player == 0)
-			return 2;
-		if(player == 1)
-			return 3;
-		if(player == 2)
-			return 0;
-		if(player == 3)
-			return 1;
-		return player;
-	} else
+int Game::OppositePlayer(int player) {
+	if(dInfo.isTag)
+		return (player & 0x2) | (1 - (player & 0x1));
+	else
 		return 1 - player;
 }
-int Game::ChatLocalPlayer(int player) const {
+int Game::ChatLocalPlayer(int player) {
 	if(player > 3)
 		return player;
 	bool is_self;
@@ -1809,13 +1801,16 @@ int Game::ChatLocalPlayer(int player) const {
 		if(dInfo.isTag) {
 			is_self = (player & 0x2) == 0 && (player & 0x1) == (DuelClient::selftype & 0x1);
 		} else {
-			is_self = (player == 0);
+			is_self = player == 0;
 		}
-		return player | (is_self ? 0x10 : 0);
 	} else {
 		// when in lobby
-		return player | (player == DuelClient::selftype ? 0x10 : 0);
+		is_self = player == DuelClient::selftype;
 	}
+	if(dInfo.isTag && (player == 1 || player == 2)) {
+		player = 3 - player;
+	}
+	return player | (is_self ? 0x10 : 0);
 }
 const wchar_t* Game::LocalName(int local_player) {
 	return local_player == 0 ? dInfo.hostname : dInfo.clientname;
