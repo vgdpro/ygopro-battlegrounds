@@ -5,21 +5,22 @@
 
 namespace ygo {
 
-char DeckManager::deckBuffer[0x10000];
+char DeckManager::deckBuffer[0x10000]{};
 DeckManager deckManager;
 
 void DeckManager::LoadLFListSingle(const char* path) {
 	LFList* cur = nullptr;
 	FILE* fp = fopen(path, "r");
-	char linebuf[256];
-	wchar_t strBuffer[256];
+	char linebuf[256]{};
+	wchar_t strBuffer[256]{};
 	if(fp) {
 		while(fgets(linebuf, 256, fp)) {
 			if(linebuf[0] == '#')
 				continue;
 			if(linebuf[0] == '!') {
 				int sa = BufferIO::DecodeUTF8(&linebuf[1], strBuffer);
-				while(strBuffer[sa - 1] == L'\r' || strBuffer[sa - 1] == L'\n' ) sa--;
+				while(strBuffer[sa - 1] == L'\r' || strBuffer[sa - 1] == L'\n' )
+					sa--;
 				strBuffer[sa] = 0;
 				LFList newlist;
 				_lfList.push_back(newlist);
@@ -28,20 +29,18 @@ void DeckManager::LoadLFListSingle(const char* path) {
 				cur->hash = 0x7dfcee6a;
 				continue;
 			}
-			int p = 0;
-			while(linebuf[p] != ' ' && linebuf[p] != '\t' && linebuf[p] != 0) p++;
-			if(linebuf[p] == 0)
+			if(linebuf[0] == 0)
 				continue;
-			linebuf[p++] = 0;
-			int sa = p;
-			int code = atoi(linebuf);
-			if(code == 0)
+			int code = 0;
+			int count = -1;
+			if (sscanf(linebuf, "%d %d", &code, &count) != 2)
 				continue;
-			while(linebuf[p] == ' ' || linebuf[p] == '\t') p++;
-			while(linebuf[p] != ' ' && linebuf[p] != '\t' && linebuf[p] != 0) p++;
-			linebuf[p] = 0;
-			int count = atoi(&linebuf[sa]);
-			if(!cur) continue;
+			if (code <= 0 || code > 99999999)
+				continue;
+			if (count < 0 || count > 2)
+				continue;
+			if (!cur)
+				continue;
 			cur->content[code] = count;
 			cur->hash = cur->hash ^ ((code << 18) | (code >> 14)) ^ ((code << (27 + count)) | (code >> (5 - count)));
 		}
@@ -161,7 +160,7 @@ int DeckManager::LoadDeck(Deck& deck, int* dbuf, int mainc, int sidec, bool is_p
 		else if(cd.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK)) {
 			if(deck.extra.size() >= 15)
 				continue;
-			deck.extra.push_back(dataManager.GetCodePointer(code));	//verified by GetData()
+			deck.extra.push_back(dataManager.GetCodePointer(code));
 		} else if(deck.main.size() < 60) {
 			deck.main.push_back(dataManager.GetCodePointer(code));
 		}
@@ -175,7 +174,7 @@ int DeckManager::LoadDeck(Deck& deck, int* dbuf, int mainc, int sidec, bool is_p
 		if(cd.type & TYPE_TOKEN)
 			continue;
 		if(deck.side.size() < 15)
-			deck.side.push_back(dataManager.GetCodePointer(code));	//verified by GetData()
+			deck.side.push_back(dataManager.GetCodePointer(code));
 	}
 	return errorcode;
 }
