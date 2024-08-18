@@ -80,11 +80,11 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 			_strings[cd.code] = cs;
 		}
 	} while (step != SQLITE_DONE);
-	sqlite3_finalize(pStmt);
 	datas_begin = _datas.begin();
 	datas_end = _datas.end();
 	strings_begin = _strings.begin();
 	strings_end = _strings.end();
+	sqlite3_finalize(pStmt);
 	return true;
 }
 bool DataManager::LoadDB(const wchar_t* wfile) {
