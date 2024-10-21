@@ -2,10 +2,9 @@
 #define DATAMANAGER_H
 
 #include "config.h"
-#include "sqlite3.h"
-#include "spmemvfs/spmemvfs.h"
-#include "client_card.h"
 #include <unordered_map>
+#include <sqlite3.h>
+#include "client_card.h"
 
 namespace ygo {
 	constexpr int MAX_STRING_ID = 0x7ff;
@@ -20,9 +19,14 @@ public:
 	bool LoadStrings(IReadFile* reader);
 	void ReadStringConfLine(const char* linebuf);
 	bool Error(sqlite3* pDB, sqlite3_stmt* pStmt = nullptr);
-	bool GetData(unsigned int code, CardData* pData) const;
+
 	code_pointer GetCodePointer(unsigned int code) const;
 	string_pointer GetStringPointer(unsigned int code) const;
+	code_pointer datas_begin();
+	code_pointer datas_end();
+	string_pointer strings_begin();
+	string_pointer strings_end();
+	bool GetData(unsigned int code, CardData* pData) const;
 	bool GetString(unsigned int code, CardString* pStr) const;
 	const wchar_t* GetName(unsigned int code) const;
 	const wchar_t* GetText(unsigned int code) const;
@@ -32,30 +36,18 @@ public:
 	const wchar_t* GetCounterName(int code) const;
 	const wchar_t* GetSetName(int code) const;
 	std::vector<unsigned int> GetSetCodes(std::wstring setname) const;
-	const wchar_t* GetNumString(int num, bool bracket = false);
+	std::wstring GetNumString(int num, bool bracket = false) const;
 	const wchar_t* FormatLocation(int location, int sequence) const;
-	const wchar_t* FormatAttribute(int attribute);
-	const wchar_t* FormatRace(int race);
-	const wchar_t* FormatType(int type);
-	const wchar_t* FormatSetName(const uint16_t setcode[]);
-	const wchar_t* FormatLinkMarker(int link_marker);
+	std::wstring FormatAttribute(unsigned int attribute) const;
+	std::wstring FormatRace(unsigned int race) const;
+	std::wstring FormatType(unsigned int type) const;
+	std::wstring FormatSetName(const uint16_t setcode[]) const;
+	std::wstring FormatLinkMarker(unsigned int link_marker) const;
 
 	std::unordered_map<unsigned int, std::wstring> _counterStrings;
 	std::unordered_map<unsigned int, std::wstring> _victoryStrings;
 	std::unordered_map<unsigned int, std::wstring> _setnameStrings;
 	std::unordered_map<unsigned int, std::wstring> _sysStrings;
-	code_pointer datas_begin;
-	code_pointer datas_end;
-	string_pointer strings_begin;
-	string_pointer strings_end;
-
-	wchar_t numStrings[301][4]{};
-	wchar_t numBuffer[6]{};
-	wchar_t attBuffer[128]{};
-	wchar_t racBuffer[128]{};
-	wchar_t tpBuffer[128]{};
-	wchar_t scBuffer[128]{};
-	wchar_t lmBuffer[32]{};
 	char errmsg[512]{};
 
 	static byte scriptBuffer[0x20000];
