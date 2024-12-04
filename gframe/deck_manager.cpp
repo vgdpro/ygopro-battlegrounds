@@ -186,7 +186,7 @@ int DeckManager::LoadDeck(Deck& deck, int* dbuf, int mainc, int sidec, bool is_p
 }
 int DeckManager::LoadDeck(Deck& deck, std::istringstream& deckStream, bool is_packlist) {
 	int ct = 0, mainc = 0, sidec = 0, code = 0;
-	int cardlist[300]{};
+	int cardlist[PACK_MAX_SIZE]{};
 	bool is_side = false;
 	std::string linebuf;
 	while (std::getline(deckStream, linebuf, '\n') && ct < (int)(sizeof cardlist / sizeof cardlist[0])) {
@@ -237,7 +237,7 @@ void DeckManager::GetCategoryPath(wchar_t* ret, int index, const wchar_t* text) 
 		myswprintf(catepath, L"./pack");
 		break;
 	case 1:
-		myswprintf(catepath, mainGame->gameConf.bot_deck_path);
+		BufferIO::CopyWideString(mainGame->gameConf.bot_deck_path, catepath);
 		break;
 	case -1:
 	case 2:
@@ -269,7 +269,7 @@ FILE* DeckManager::OpenDeckFile(const wchar_t* file, const char* mode) {
 	return fp;
 }
 IReadFile* DeckManager::OpenDeckReader(const wchar_t* file) {
-#ifdef WIN32
+#ifdef _WIN32
 	IReadFile* reader = dataManager.FileSystem->createAndOpenFile(file);
 #else
 	char file2[256];
@@ -333,7 +333,7 @@ bool DeckManager::SaveDeck(Deck& deck, const wchar_t* file) {
 	return true;
 }
 bool DeckManager::DeleteDeck(const wchar_t* file) {
-#ifdef WIN32
+#ifdef _WIN32
 	BOOL result = DeleteFileW(file);
 	return !!result;
 #else
