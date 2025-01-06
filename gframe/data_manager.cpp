@@ -6,7 +6,7 @@
 namespace ygo {
 
 const wchar_t* DataManager::unknown_string = L"???";
-unsigned char DataManager::scriptBuffer[0x20000];
+unsigned char DataManager::scriptBuffer[0x100000];
 IFileSystem* DataManager::FileSystem;
 DataManager dataManager;
 
@@ -400,7 +400,7 @@ unsigned char* DataManager::ScriptReaderEx(const char* script_name, int* slen) {
 	if(mainGame->gameConf.prefer_expansion_script) {
 		if (DefaultScriptReader(expansions_path, slen))
 			return scriptBuffer;
-		else if (ScriptReader(script_name, slen))
+		else if (ScriptReader(script_name + 2, slen))
 			return scriptBuffer;
 		else if (DefaultScriptReader(script_name, slen))
 			return scriptBuffer;
@@ -409,7 +409,7 @@ unsigned char* DataManager::ScriptReaderEx(const char* script_name, int* slen) {
 			return scriptBuffer;
 		else if (DefaultScriptReader(expansions_path, slen))
 			return scriptBuffer;
-		else if (ScriptReader(script_name, slen))
+		else if (ScriptReader(script_name + 2, slen))
 			return scriptBuffer;
 	}
 	return nullptr;
@@ -424,14 +424,11 @@ unsigned char* DataManager::ScriptReader(const char* script_name, int* slen) {
 #endif
 	if (!reader)
 		return nullptr;
-	size_t size = reader->getSize();
-	if (size > sizeof scriptBuffer) {
-		reader->drop();
-		return nullptr;
-	}
-	reader->read(scriptBuffer, size);
+	int size = reader->read(scriptBuffer, sizeof scriptBuffer);
 	reader->drop();
-	*slen = (int)size;
+	if (size >= (int)sizeof scriptBuffer)
+		return nullptr;
+	*slen = size;
 	return scriptBuffer;
 }
 unsigned char* DataManager::DefaultScriptReader(const char* script_name, int* slen) {
