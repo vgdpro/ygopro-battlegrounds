@@ -17,6 +17,7 @@ namespace irr {
 namespace ygo {
 constexpr int MAX_STRING_ID = 0x7ff;
 constexpr unsigned int MIN_CARD_ID = (unsigned int)(MAX_STRING_ID + 1) >> 4;
+constexpr unsigned int MAX_CARD_ID = 0x0fffffffU;
 	
 using CardData = card_data;
 struct CardDataC : card_data {
@@ -82,12 +83,12 @@ public:
 	static unsigned char scriptBuffer[0x100000];
 	static const wchar_t* unknown_string;
 	static uint32_t CardReader(uint32_t, card_data*);
-	static unsigned char* ScriptReaderEx(const char* script_name, int* slen);
+	static unsigned char* ScriptReaderEx(const char* script_path, int* slen);
 	
 	//read by IFileSystem
-	static unsigned char* ScriptReader(const char* script_name, int* slen);
+	static unsigned char* ReadScriptFromIrrFS(const char* script_name, int* slen);
 	//read by fread
-	static unsigned char* DefaultScriptReader(const char* script_name, int* slen);
+	static unsigned char* ReadScriptFromFile(const char* script_name, int* slen);
 	
 	static irr::io::IFileSystem* FileSystem;
 

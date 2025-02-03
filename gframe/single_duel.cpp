@@ -245,7 +245,7 @@ void SingleDuel::PlayerReady(DuelPlayer* dp, bool is_ready) {
 		unsigned int deckerror = 0;
 		if(!host_info.no_check_deck) {
 			if(deck_error[dp->type]) {
-				deckerror = (DECKERROR_UNKNOWNCARD << 28) + deck_error[dp->type];
+				deckerror = (DECKERROR_UNKNOWNCARD << 28) | deck_error[dp->type];
 			} else {
 				deckerror = deckManager.CheckDeck(pdeck[dp->type], host_info.lflist, host_info.rule);
 			}
@@ -277,6 +277,8 @@ void SingleDuel::PlayerKick(DuelPlayer* dp, unsigned char pos) {
 }
 void SingleDuel::UpdateDeck(DuelPlayer* dp, unsigned char* pdata, int len) {
 	if(dp->type > 1 || ready[dp->type])
+		return;
+	if (len < 8 || len > sizeof(CTOS_DeckData))
 		return;
 	bool valid = true;
 	CTOS_DeckData deckbuf;
