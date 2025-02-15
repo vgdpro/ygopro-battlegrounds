@@ -235,7 +235,7 @@ void ClientField::AddCard(ClientCard* pcard, int controler, int location, int se
 			extra[controler].push_back(pcard);
 			pcard->sequence = (unsigned char)(extra[controler].size() - 1);
 		} else {
-			int p = extra[controler].size() - extra_p_count[controler] - 1;
+			int p = extra[controler].size() - extra_p_count[controler];
 			for(int i = extra[controler].size() - 1; i > p; --i) {
 				extra[controler][i]->sequence++;
 				extra[controler][i]->curPos += irr::core::vector3df(0, 0, 0.01f);
@@ -1184,11 +1184,11 @@ bool ClientField::CheckSelectSum() {
 	if (select_mode == 0) { // sum equal
 		bool ret = check_sel_sum_s(selable, 0, select_sumval);
 		selectable_cards.clear();
-		for(auto sc : selected_cards) {
-			selectable_cards.push_back(sc);
-		}
 		for(auto sc : selectsum_cards) {
 			sc->is_selectable = true;
+			selectable_cards.push_back(sc);
+		}
+		for(auto sc : selected_cards) {
 			selectable_cards.push_back(sc);
 		}
 		return ret;
@@ -1248,11 +1248,11 @@ bool ClientField::CheckSelectSum() {
 			}
 		}
 		selectable_cards.clear();
-		for(auto sc : selected_cards) {
-			selectable_cards.push_back(sc);
-		}
 		for(auto sc : selectsum_cards) {
 			sc->is_selectable = true;
+			selectable_cards.push_back(sc);
+		}
+		for(auto sc : selected_cards) {
 			selectable_cards.push_back(sc);
 		}
 		return ret;
