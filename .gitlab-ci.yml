@@ -67,13 +67,13 @@ mat_linux:
   script:
     - apt update; apt -y install git wget tar
     - git clone --depth=1 https://code.mycard.moe/mycard/irrlicht-new irrlicht
-    - wget -O - https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta2-linux.tar.gz | tar zfx -
-    - env PROCESSOR_COUNT=$(nproc) ./.ci/libevent-prebuild.sh
+    # - wget -O - https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta5-linux.tar.gz | tar zfx -
+    # - env PROCESSOR_COUNT=$(nproc) ./.ci/libevent-prebuild.sh
   artifacts:
     paths:
-      - premake5
+      # - premake5
       - irrlicht
-      - libevent-stable
+      # - libevent-stable
   image: git-registry.mycard.moe/mycard/docker-runner-base:debian11
 
 #mat_macos_irrklang_patched:
@@ -93,7 +93,7 @@ mat_macos:
     - linux
   script:
     - apt update; apt -y install wget tar
-    - wget -O - https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta2-macosx.tar.gz | tar zfx -
+    - wget -O - https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta5-macosx.tar.gz | tar zfx -
     # - wget -O - https://cdn01.moecube.com/ygopro-build-materials/libirrklang-patched-dylib.tar.gz | tar zfx -
     - mkdir irrlicht
     - cd irrlicht
@@ -111,8 +111,8 @@ mat_windows:
   script:
     - apt update; apt -y install wget tar patch p7zip-full
     # premake5.exe
-    - wget https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta2-windows.zip
-    - 7z x -y premake-5.0.0-beta2-windows.zip
+    - wget https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta5-windows.zip
+    - 7z x -y premake-5.0.0-beta5-windows.zip
     # event
     - wget -O - https://cdn01.moecube.com/ygopro-build-materials/libevent-2.0.22-stable.tar.gz | tar zfx -
     - mv libevent-2.0.22-stable event
@@ -166,9 +166,9 @@ exec_linux:
     - mkdir lib
     - cp -rf irrklang/bin/linux-gcc-64/libIrrKlang.so ./lib/
     # - cp -rf irrklang/bin/linux-gcc-64/ikpMP3.so ./lib/
-    - export EVENT_INCLUDE_DIR=$PWD/libevent-stable/include
-    - export EVENT_LIB_DIR=$PWD/libevent-stable/lib
-    - ./premake5 gmake --build-freetype --build-sqlite --build-irrlicht --build-ikpmp3 --irrklang-pro
+    - export EVENT_INCLUDE_DIR=/usr/share/libevent-stable/include
+    - export EVENT_LIB_DIR=/usr/share/libevent-stable/lib
+    - premake5 gmake --build-freetype --build-sqlite --build-irrlicht --build-ikpmp3 --irrklang-pro
     - cd build
     - make config=release -j$(nproc)
     - cd ..
@@ -178,7 +178,7 @@ exec_linux:
     paths:
       - ygopro
       - lib
-  image: git-registry.mycard.moe/mycard/docker-runner-base:debian11
+  image: git-registry.moenext.com/mycard/docker-ygopro-builder:latest
 
 .exec_macos_platform:
   stage: build
