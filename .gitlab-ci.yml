@@ -32,6 +32,7 @@ mat_common:
       - lua
       - freetype
       - sqlite3
+      - miniaudio
 
 mat_submodules:
   stage: prepare
