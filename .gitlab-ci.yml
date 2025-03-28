@@ -23,6 +23,8 @@ mat_common:
     # freetype
     - wget -O - https://cdn01.moecube.com/ygopro-build-materials/freetype-2.11.1.tar.gz | tar zfx -
     - mv freetype-2.11.1 freetype
+    # miniaudio
+    - ./.ci/prepare-miniaudio.sh
     # premake
     - cp -rf premake/* .;
   artifacts:
@@ -45,21 +47,6 @@ mat_submodules:
       - ocgcore
       - script
 
-mat_irrklang:
-  stage: prepare
-  tags:
-    - linux
-  script:
-    - apt update; apt -y install git
-    - mkdir -p ~/.ssh; chmod 700 ~/.ssh; echo "$NANAHIRA_SSH_KEY" | base64 --decode > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan git.mycard.moe >> ~/.ssh/known_hosts
-    - git clone --depth=1 git@git.mycard.moe:nanahira/irrklang
-    - mv -f irrklang/plugins/ikpmp3 .
-  artifacts:
-    paths:
-      - irrklang
-      - ikpmp3
-
 mat_linux:
   stage: prepare
   tags:
@@ -76,17 +63,6 @@ mat_linux:
       # - libevent-stable
   image: git-registry.mycard.moe/mycard/docker-runner-base:debian11
 
-#mat_macos_irrklang_patched:
-#  stage: build
-#  tags:
-#    - linux
-#  dependencies: []
-#  script:
-#    - wget -O - https://cdn01.moecube.com/ygopro-build-materials/libirrklang-patched-dylib.tar.gz | tar zfx -
-#  artifacts:
-#    paths:
-#      - libirrklang-patched.dylib
-
 mat_macos:
   stage: prepare
   tags:
@@ -94,7 +70,6 @@ mat_macos:
   script:
     - apt update; apt -y install wget tar
     - wget -O - https://cdn01.moecube.com/ygopro-build-materials/premake-5.0.0-beta5-macosx.tar.gz | tar zfx -
-    # - wget -O - https://cdn01.moecube.com/ygopro-build-materials/libirrklang-patched-dylib.tar.gz | tar zfx -
     - mkdir irrlicht
     - cd irrlicht
     - wget -O - https://cdn01.moecube.com/ygopro-build-materials/irrlicht-mycard-mac.tar.gz | tar zfx -
@@ -130,7 +105,6 @@ exec_windows:
     - vs
   dependencies:
     - mat_common
-    - mat_irrklang
     - mat_windows
     - mat_submodules
   cache:
@@ -140,7 +114,7 @@ exec_windows:
       - obj/
   script:
     - bash -c 'cp -rf premake/* .'
-    - '.\premake5.exe vs2019 --irrklang-pro'
+    - '.\premake5.exe vs2019'
     - cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\msbuild.exe" build\YGOPro.sln /m /p:Configuration=Release'
     - copy bin\release\ygopro.exe .
   artifacts:
@@ -151,24 +125,28 @@ exec_linux:
   stage: build
   tags:
     - linux
+  image: git-registry.moenext.com/mycard/docker-ygopro-builder:latest
   dependencies:
     - mat_common
-    - mat_irrklang
     - mat_linux
     - mat_submodules
+  variables:
+    EVENT_INCLUDE_DIR: /usr/share/libevent-stable/include
+    EVENT_LIB_DIR: /usr/share/libevent-stable/lib
+    OPUS_INCLUDE_DIR: $CI_PROJECT_DIR/miniaudio/external-built/include/opus
+    OPUS_LIB_DIR: $CI_PROJECT_DIR/miniaudio/external-built/lib
+    VORBIS_INCLUDE_DIR: $CI_PROJECT_DIR/miniaudio/external-built/include
+    VORBIS_LIB_DIR: $CI_PROJECT_DIR/miniaudio/external-built/lib
+    OGG_INCLUDE_DIR: $CI_PROJECT_DIR/miniaudio/external-built/include
+    OGG_LIB_DIR: $CI_PROJECT_DIR/miniaudio/external-built/lib
   cache:
     key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
     paths:
       - bin/
       - obj/
   script:
-    - apt update; apt -y install git build-essential libgl1-mesa-dev libglu-dev libxxf86vm-dev
-    - mkdir lib
-    - cp -rf irrklang/bin/linux-gcc-64/libIrrKlang.so ./lib/
-    # - cp -rf irrklang/bin/linux-gcc-64/ikpMP3.so ./lib/
-    - export EVENT_INCLUDE_DIR=/usr/share/libevent-stable/include
-    - export EVENT_LIB_DIR=/usr/share/libevent-stable/lib
-    - premake5 gmake --build-freetype --build-sqlite --build-irrlicht --build-ikpmp3 --irrklang-pro
+    - ./.ci/build-opus.sh
+    - premake5 gmake --build-freetype --build-sqlite --build-irrlicht
     - cd build
     - make config=release -j$(nproc)
     - cd ..
@@ -177,8 +155,6 @@ exec_linux:
   artifacts:
     paths:
       - ygopro
-      - lib
-  image: git-registry.moenext.com/mycard/docker-ygopro-builder:latest
 
 .exec_macos_platform:
   stage: build
@@ -215,17 +191,11 @@ exec_macos:
   dependencies:
     - exec_macos_platform_x86
     - exec_macos_platform_m1
-    #- mat_macos_irrklang_patched
   script:
     - mkdir -p ygopro.app/Contents/MacOS ygopro.app/Contents/Frameworks;
     - lipo -create -output ygopro.app/Contents/MacOS/ygopro $(ls -1 ygopro-platforms/ygopro-platform-*);
-    # do some special things for irrklang
-   # - mv ./libirrklang-patched.dylib ygopro.app/Contents/Frameworks/libirrklang.dylib 
-    #- install_name_tool -change /usr/local/lib/libirrklang.dylib @executable_path/../Frameworks/libirrklang.dylib ygopro.app/Contents/MacOS/ygopro
-    #- dylibbundler -x ygopro.app/Contents/MacOS/ygopro -b -d ygopro.app/Contents/Frameworks/ -p @executable_path/../Frameworks/ -cd -i @executable_path/../Frameworks;
-    #- strip ygopro.app/Contents/MacOS/ygopro;
     - mkdir ygopro.app/Contents/Resources;
-    - mv premake/gframe/ygopro.icns ygopro.app/Contents/Resources/Icon.icns;
+    - mv resource/gframe/ygopro.icns ygopro.app/Contents/Resources/Icon.icns;
     - defaults write "$PWD/ygopro.app/Contents/Info.plist" "CFBundleIconFile" "Icon.icns";
     - defaults write "$PWD/ygopro.app/Contents/Info.plist" "CFBundleIdentifier" "moe.mycard.ygopro";
 
