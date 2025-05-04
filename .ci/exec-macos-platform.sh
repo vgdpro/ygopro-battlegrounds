@@ -15,6 +15,7 @@ export VORBIS_LIB_DIR=$PWD/miniaudio/external-built/lib
 export OGG_INCLUDE_DIR=$PWD/miniaudio/external-built/include
 export OGG_LIB_DIR=$PWD/miniaudio/external-built/lib
 
+brew install wget tar
 ./.ci/libevent-prebuild.sh
 ./.ci/build-opus.sh
 
