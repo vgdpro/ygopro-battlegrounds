@@ -401,12 +401,6 @@ jobs:
       run: |
         git clone --depth=1 https://github.com/mercury233/irrlicht
 
-    - name: Build irrlicht
-      run: |
-        cd irrlicht/source/Irrlicht/MacOSX
-        xcodebuild -project MacOSX.xcodeproj
-        cd ../../../..
-
     - name: Copy premake files
       run: |
         cp -r premake/* .
@@ -417,10 +411,15 @@ jobs:
       run: |
         ./premake5 gmake \
           --cc=clang \
+<<<<<<< HEAD
           --freetype-include-dir="/usr/local/include/freetype2" \
           --opus-include-dir="/usr/local/include/opus" \
           --irrlicht-include-dir="../irrlicht/include" \
           --irrlicht-lib-dir="../irrlicht/source/Irrlicht/MacOSX/build/Release"
+=======
+          --no-use-irrklang \
+          --freetype-include-dir="/usr/local/include/freetype2"
+>>>>>>> 3aace69fd7bed29f44f40321b513be2a9a3ee45c
 
     - name: Use premake to generate make files (ARM64)
       if: runner.arch == 'ARM64'
@@ -432,6 +431,7 @@ jobs:
           --freetype-include-dir="/opt/homebrew/include/freetype2" \
           --freetype-lib-dir="/opt/homebrew/lib" \
           --sqlite-include-dir="/opt/homebrew/opt/sqlite/include" \
+<<<<<<< HEAD
           --sqlite-lib-dir="/opt/homebrew/opt/sqlite/lib" \
           --miniaudio-include-dir="/opt/homebrew/include" \
           --miniaudio-lib-dir="/opt/homebrew/lib" \
@@ -441,6 +441,9 @@ jobs:
           --vorbis-lib-dir="/opt/homebrew/lib" \
           --irrlicht-include-dir="../irrlicht/include" \
           --irrlicht-lib-dir="../irrlicht/source/Irrlicht/MacOSX/build/Release"
+=======
+          --sqlite-lib-dir="/opt/homebrew/opt/sqlite/lib"
+>>>>>>> 3aace69fd7bed29f44f40321b513be2a9a3ee45c
 
     - name: Make
       run: |
