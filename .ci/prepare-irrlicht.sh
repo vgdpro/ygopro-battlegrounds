@@ -6,11 +6,7 @@ IRRLICHT_REPO_URL="https://code.moenext.com/mycard/irrlicht-new.git"
 IRRLICHT_BRANCH_NAME="master"
 
 # if $CI_COMMIT_REF_NAME includes develop or pre, then we use the develop branch
-if [[ "$CI_COMMIT_REF_NAME" == *"develop"* ]]; then
-  IRRLICHT_BRANCH_NAME="develop"
-fi
-
-if [[ "$CI_COMMIT_REF_NAME" == *"-pre"* ]]; then
+if [[ "$CI_COMMIT_REF_NAME" == *"develop"* || "$CI_COMMIT_REF_NAME" == *".pre"* ]]; then
   IRRLICHT_BRANCH_NAME="develop"
 fi
 
