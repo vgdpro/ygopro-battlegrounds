@@ -143,6 +143,7 @@ exec_linux:
       - bin/
       - obj/
   script:
+    - chmod +x ./.ci/*.sh
     - ./.ci/build-opus.sh
     - premake5 gmake --build-freetype --build-sqlite
     - cd build
@@ -165,7 +166,9 @@ exec_linux:
     paths:
       - bin/
       - obj/
-  script: ./.ci/exec-macos-platform.sh
+  script:
+    - chmod +x ./.ci/*.sh
+    - ./.ci/exec-macos-platform.sh
   artifacts:
     paths:
       - ygopro-platforms
