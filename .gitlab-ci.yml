@@ -24,6 +24,7 @@ mat_common:
     - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/freetype-2.11.1.tar.gz | tar zfx -
     - mv freetype-2.11.1 freetype
     # irrlicht
+    - chmod +x ./.ci/*.sh
     - ./.ci/prepare-irrlicht.sh
     # miniaudio
     - ./.ci/prepare-miniaudio.sh
