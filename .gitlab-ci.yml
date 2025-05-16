@@ -24,7 +24,6 @@ mat_common:
     - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/freetype-2.11.1.tar.gz | tar zfx -
     - mv freetype-2.11.1 freetype
     # irrlicht
-    - chmod +x ./.ci/*.sh
     - ./.ci/prepare-irrlicht.sh
     # miniaudio
     - ./.ci/prepare-miniaudio.sh
@@ -143,7 +142,6 @@ exec_linux:
       - bin/
       - obj/
   script:
-    - chmod +x ./.ci/*.sh
     - ./.ci/build-opus.sh
     - premake5 gmake --build-freetype --build-sqlite
     - cd build
@@ -166,9 +164,7 @@ exec_linux:
     paths:
       - bin/
       - obj/
-  script:
-    - chmod +x ./.ci/*.sh
-    - ./.ci/exec-macos-platform.sh
+  script: ./.ci/exec-macos-platform.sh
   artifacts:
     paths:
       - ygopro-platforms
