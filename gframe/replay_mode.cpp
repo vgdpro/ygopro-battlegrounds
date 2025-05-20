@@ -159,7 +159,7 @@ bool ReplayMode::StartDuel() {
 	unsigned int seed = rh.seed;
 	std::mt19937 rnd(seed);
 	cur_replay.SkipInfo();
-	if(mainGame->dInfo.isTag) {
+	if(rh.flag & REPLAY_TAG) {
 		BufferIO::CopyWideString(cur_replay.players[0].c_str(), mainGame->dInfo.hostname);
 		BufferIO::CopyWideString(cur_replay.players[1].c_str(), mainGame->dInfo.hostname_tag);
 		BufferIO::CopyWideString(cur_replay.players[2].c_str(), mainGame->dInfo.clientname_tag);
@@ -208,7 +208,9 @@ bool ReplayMode::StartDuel() {
 				new_tag_card(pduel, code, 1, LOCATION_EXTRA);
 		}
 	} else {
-		if(!preload_script(pduel, cur_replay.script_name.c_str())) {
+		char filename[256]{};
+		std::snprintf(filename, sizeof filename, "./single/%s", cur_replay.script_name.c_str());
+		if(!preload_script(pduel, filename)) {
 			return false;
 		}
 	}
@@ -822,12 +824,12 @@ bool ReplayMode::ReplayAnalyze(unsigned char* msg, unsigned int len) {
 			break;
 		}
 		case MSG_AI_NAME: {
-			int len = BufferIO::ReadInt16(pbuf);
+			int len = buffer_read<uint16_t>(pbuf);
 			pbuf += len + 1;
 			break;
 		}
 		case MSG_SHOW_HINT: {
-			int len = BufferIO::ReadInt16(pbuf);
+			int len = buffer_read<uint16_t>(pbuf);
 			pbuf += len + 1;
 			break;
 		}
