@@ -27,7 +27,7 @@ newoption { trigger = "no-build-lua", category = "YGOPro - lua", description = "
 newoption { trigger = "lua-include-dir", category = "YGOPro - lua", description = "", value = "PATH" }
 newoption { trigger = "lua-lib-dir", category = "YGOPro - lua", description = "", value = "PATH" }
 newoption { trigger = "lua-lib-name", category = "YGOPro - lua", description = "", value = "NAME", default = LUA_LIB_NAME }
-newoption { trigger = "lua-deb", category = "YGOPro - lua", description = "" }
+newoption { trigger = "lua-deb", category = "YGOPro - lua", description = "Use Debian lua package" }
 
 newoption { trigger = "build-event", category = "YGOPro - event", description = "" }
 newoption { trigger = "no-build-event", category = "YGOPro - event", description = "" }
@@ -141,7 +141,7 @@ if GetParam("lua-deb") then
     local lua_versions = { "5.4", "5.3" }
     local lua_version = nil
     for _, version in ipairs(lua_versions) do
-        local lua_lib_dir = os.findlib("lua" .. version)
+        local lua_lib_dir = os.findlib("lua" .. version .. "-c++")
         if lua_lib_dir then
             print("Found lua " .. version .. " at " .. lua_lib_dir)
             lua_version = version
