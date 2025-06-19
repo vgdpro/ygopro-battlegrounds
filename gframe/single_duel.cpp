@@ -540,9 +540,20 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	rh.base.version = PRO_VERSION;
 	rh.base.flag = REPLAY_UNIFORM;
 	rh.base.start_time = (uint32_t)std::time(nullptr);
+#ifdef SERVER_OLD_REPLAY
+	rh.base.id = REPLAY_ID_YRP1;
+	unsigned int seed = rd();
+	if (pre_seed[duel_count] > 0) {
+		seed = pre_seed[duel_count];
+	}
+	rh.base.seed = seed;
+	mtrandom rnd((uint_fast32_t)seed);
+	auto duel_seed = rnd.rand();
+#else
 	for (auto& x : rh.seed_sequence)
 		x = rd();
 	mtrandom rnd(rh.seed_sequence, SEED_COUNT);
+#endif
 	last_replay.BeginRecord();
 	last_replay.WriteHeader(rh);
 	last_replay.WriteData(players[0]->name, 40, false);
@@ -556,7 +567,11 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	set_script_reader(DataManager::ScriptReaderEx);
 	set_card_reader(DataManager::CardReader);
 	set_message_handler(SingleDuel::MessageHandler);
+#ifdef SERVER_OLD_REPLAY
+	pduel = create_duel(duel_seed);
+#else
 	pduel = create_duel_v2(rh.seed_sequence);
+#endif
 	set_player_info(pduel, 0, host_info.start_lp, host_info.start_hand, host_info.draw_count);
 	set_player_info(pduel, 1, host_info.start_lp, host_info.start_hand, host_info.draw_count);
 #ifdef YGOPRO_SERVER_MODE

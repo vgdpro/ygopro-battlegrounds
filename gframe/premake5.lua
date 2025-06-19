@@ -33,6 +33,9 @@ if SERVER_MODE then
     if SERVER_TAG_SURRENDER_CONFIRM then
         defines { "SERVER_TAG_SURRENDER_CONFIRM" }
     end
+    if SERVER_OLD_REPLAY then
+        defines { "SERVER_OLD_REPLAY" }
+    end
 else
     kind "WindowedApp"
     cppdialect "C++14"
