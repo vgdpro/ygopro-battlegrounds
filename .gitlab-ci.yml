@@ -15,14 +15,17 @@ mat_common:
     - linux
   script:
     # lua
-    - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/lua-5.4.4.tar.gz | tar zfx -
-    - mv lua-5.4.4 lua
+    - wget -O - https://mat-cacher.moenext.com/https://www.lua.org/ftp/lua-5.4.8.tar.gz | tar zfx -
+    - mv lua-5.4.8 lua
     # sqlite3
-    - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/sqlite-autoconf-3390300.tar.gz | tar zfx -
-    - mv sqlite-autoconf-3390300 sqlite3
+    - wget -O - https://mat-cacher.moenext.com/https://www.sqlite.org/2025/sqlite-autoconf-3500100.tar.gz | tar zfx -
+    - mv sqlite-autoconf-3500100 sqlite3
     # freetype
-    - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/freetype-2.11.1.tar.gz | tar zfx -
-    - mv freetype-2.11.1 freetype
+    - wget -O - https://mat-cacher.moenext.com/https://downloads.sourceforge.net/freetype/freetype-2.13.3.tar.gz | tar zfx -
+    - mv freetype-2.13.3 freetype
+    # event
+    - wget -O - https://mat-cacher.moenext.com/https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz | tar zfx -
+    - mv libevent-2.1.12-stable event
     # irrlicht
     - ./.ci/prepare-irrlicht.sh
     # miniaudio
@@ -34,6 +37,7 @@ mat_common:
       - lua
       - freetype
       - sqlite3
+      - event
       - irrlicht
       - miniaudio
 
@@ -58,7 +62,7 @@ mat_submodules:
 #  script:
 #    - apt update; apt -y install git wget tar
 #    - ./.ci/prepare-irrlicht.sh
-#    # - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/premake-5.0.0-beta5-linux.tar.gz | tar zfx -
+#    # - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/premake-5.0.0-beta6-linux.tar.gz | tar zfx -
 #    # - env PROCESSOR_COUNT=$(nproc) ./.ci/libevent-prebuild.sh
 #  artifacts:
 #    paths:
@@ -72,8 +76,7 @@ mat_macos:
   tags:
     - linux
   script:
-    - apt update; apt -y install wget tar
-    - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/premake-5.0.0-beta5-macosx.tar.gz | tar zfx -
+    - wget -O - https://cdn02.moecube.com:444/premake5-built/premake-5.0.0-beta7-macosx.tar.gz | tar zfx -
     - chmod +x premake5
   artifacts:
     paths:
@@ -84,67 +87,60 @@ mat_windows:
   tags:
     - linux
   script:
-    - apt update; apt -y install wget tar patch p7zip-full
     # premake5.exe
-    - wget https://cdn02.moecube.com:444/ygopro-build-materials/premake-5.0.0-beta5-windows.zip
-    - 7z x -y premake-5.0.0-beta5-windows.zip
-    # event
-    - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/libevent-2.0.22-stable.tar.gz | tar zfx -
-    - mv libevent-2.0.22-stable event
+    - wget https://cdn02.moecube.com:444/premake5-built/premake-5.0.0-beta7-windows.zip
+    - 7z x -y premake-5.0.0-beta7-windows.zip
   artifacts:
     paths:
       - premake5.exe
-      - event
+
+._exec_build:
+  stage: build
 
 exec_windows:
-  stage: build
+  extends: ._exec_build
   tags:
     - vs
   dependencies:
     - mat_common
     - mat_windows
     - mat_submodules
-  cache:
-    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
-    paths:
-      - bin/
-      - obj/
   script:
     - bash -c 'cp -rf premake/* . ; cp -rf resource/* .'
     - '.\premake5.exe vs2019'
-    - cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\msbuild.exe" build\YGOPro.sln /m /p:Configuration=Release'
-    - copy bin\release\ygopro.exe .
+    - cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\msbuild.exe" build\YGOPro.sln /m /p:Configuration=Release /p:Platform=x64'
+    - copy bin\release\x64\ygopro.exe .
+    - copy C:\Windows\System32\vcomp140.dll .
   artifacts:
     paths:
       - ygopro.exe
+      - vcomp140.dll
+
+.exec_unix:
+  extends: ._exec_build
+  variables:
+    BUILD_FREETYPE: '1'
+    BUILD_SQLITE: '1'
+    BUILD_IRRLICHT: '1'
+    BUILD_EVENT: '1'
+    BUILD_OPUS_VORBIS: '1'
+    AUDIO_LIB: 'miniaudio'
+    MINIAUDIO_SUPPORT_OPUS_VORBIS: '1'
+    BUILD_OPUS_VORBIS: '1'
+  before_script:
+    - ./.ci/configure-libevent.sh
 
 exec_linux:
-  stage: build
+  extends: .exec_unix
   tags:
-    - linux
+    - avx2
   image: git-registry.moenext.com/mycard/docker-ygopro-builder:latest
   dependencies:
     - mat_common
     #- mat_linux
     - mat_submodules
-  variables:
-    EVENT_INCLUDE_DIR: /usr/share/libevent-stable/include
-    EVENT_LIB_DIR: /usr/share/libevent-stable/lib
-    OPUS_INCLUDE_DIR: $CI_PROJECT_DIR/miniaudio/external-built/include/opus
-    OPUS_LIB_DIR: $CI_PROJECT_DIR/miniaudio/external-built/lib
-    OPUSFILE_INCLUDE_DIR: $CI_PROJECT_DIR/miniaudio/external-built/include/opus
-    OPUSFILE_LIB_DIR: $CI_PROJECT_DIR/miniaudio/external-built/lib
-    VORBIS_INCLUDE_DIR: $CI_PROJECT_DIR/miniaudio/external-built/include
-    VORBIS_LIB_DIR: $CI_PROJECT_DIR/miniaudio/external-built/lib
-    OGG_INCLUDE_DIR: $CI_PROJECT_DIR/miniaudio/external-built/include
-    OGG_LIB_DIR: $CI_PROJECT_DIR/miniaudio/external-built/lib
-  cache:
-    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
-    paths:
-      - bin/
-      - obj/
   script:
-    - ./.ci/build-opus.sh
+    - ./.ci/configure-audio.sh
     - premake5 gmake --build-freetype --build-sqlite
     - cd build
     - make config=release -j$(nproc)
@@ -156,16 +152,11 @@ exec_linux:
       - ygopro
 
 .exec_macos_platform:
-  stage: build
+  extends: .exec_unix
   dependencies:
     - mat_macos
     - mat_common
     - mat_submodules
-  cache:
-    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
-    paths:
-      - bin/
-      - obj/
   script: ./.ci/exec-macos-platform.sh
   artifacts:
     paths:
@@ -180,8 +171,6 @@ exec_macos_platform_m1:
   extends: .exec_macos_platform
   tags:
     - macos-m1
-  variables:
-    MAC_ARM: 1
 
 exec_macos:
   stage: combine
