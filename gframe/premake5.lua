@@ -38,7 +38,6 @@ if SERVER_MODE then
     end
 else
     kind "WindowedApp"
-    cppdialect "C++14"
     rtti "Off"
     openmp "On"
 
@@ -126,6 +125,8 @@ end
                 filter {}
             end
         end
+    filter "not action:vs*"
+        cppdialect "C++14"
 
     filter "system:macosx"
 if not SERVER_MODE then
