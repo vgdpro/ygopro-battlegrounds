@@ -60,7 +60,10 @@ public:
 	string_pointer strings_begin() const;
 	string_pointer strings_end() const;
 #endif
+	std::vector<unsigned int> _codeset;
 	bool GetData(unsigned int code, CardData* pData) const;
+	bool GetDataRandom(CardData* pData, uint32_t type,bool is_include);
+	std::vector<unsigned int> GenerateRandomCardCodes(int count, uint32_t type,bool is_include);
 #ifndef YGOPRO_SERVER_MODE
 	bool GetString(unsigned int code, CardString* pStr) const;
 	const wchar_t* GetName(unsigned int code) const;
@@ -89,6 +92,7 @@ public:
 	static unsigned char scriptBuffer[0x100000];
 	static const wchar_t* unknown_string;
 	static uint32_t CardReader(uint32_t, card_data*);
+	static uint32_t CardReaderRandom(card_data* , uint32_t type,bool is_include);
 	static unsigned char* ScriptReaderEx(const char* script_path, int* slen);
 	
 #if !defined(YGOPRO_SERVER_MODE) || defined(SERVER_ZIP_SUPPORT)

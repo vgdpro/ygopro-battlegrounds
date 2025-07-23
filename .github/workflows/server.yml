@@ -266,9 +266,11 @@ jobs:
           bin/release/ygopro
 
   publish:
-    needs: [build-windows]
+    needs: [build-windows, build-linux]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 添加必要的权限
 
     steps:
     - name: Download build artifacts

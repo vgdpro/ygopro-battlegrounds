@@ -1,5 +1,8 @@
 #include "data_manager.h"
 #include "game.h"
+#include <iostream>
+#include <unordered_map>
+#include <random>
 #if !defined(YGOPRO_SERVER_MODE) || defined(SERVER_ZIP_SUPPORT)
 #include "spmemvfs/spmemvfs.h"
 #endif
@@ -35,6 +38,7 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 		step = sqlite3_step(pStmt);
 		if (step == SQLITE_ROW) {
 			cd.code = sqlite3_column_int(pStmt, 0);
+			_codeset.push_back(cd.code);
 			cd.ot = sqlite3_column_int(pStmt, 1);
 			cd.alias = sqlite3_column_int(pStmt, 2);
 			uint64_t setcode = static_cast<uint64_t>(sqlite3_column_int64(pStmt, 3));
@@ -220,6 +224,76 @@ bool DataManager::GetData(unsigned int code, CardData* pData) const {
 		return false;
 	if (pData) {
 		*pData = cdit->second;
+	}
+	return true;
+}
+std::vector<unsigned int> DataManager::GenerateRandomCardCodes(int count, uint32_t type,bool is_include) {
+    std::vector<unsigned int> candidates;
+    candidates.reserve(_codeset.size());
+    for(unsigned int code : _codeset){
+        auto it = _datas.find(code);
+        if(it == _datas.end()) continue;
+        const auto &d = it->second;
+        if(d.type & TYPE_TOKEN) continue; 
+        if(is_include){
+			if(type == 0 || (d.type & type))
+            candidates.push_back(code);
+		}else{
+			if(type == 0 || !(d.type & type))
+            candidates.push_back(code);
+		}
+    }
+    if(candidates.empty()) return {};
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::shuffle(candidates.begin(), candidates.end(), gen);
+    if(count <= 0) return {};
+    if((size_t)count >= candidates.size()) return candidates;
+    return std::vector<unsigned int>(candidates.begin(), candidates.begin() + count);
+}
+bool DataManager::GetDataRandom(CardData* pData ,uint32_t type , bool is_include) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, _codeset.size() - 1);
+
+	int code1 = dis(gen);
+
+	code_pointer cdit = _datas.find(_codeset[code1]);
+	if(is_include){
+		while (!(cdit->second.type & type) || cdit->second.type & TYPE_TOKEN)
+		{
+			rd(); 
+			gen.seed(rd()); 
+			dis.reset(); 
+			code1 = dis(gen);
+			cdit =_datas.find(_codeset[code1]);
+		}
+	}
+	else{
+		while ((cdit->second.type & type) || cdit->second.type & TYPE_TOKEN)
+		{
+			rd(); 
+			gen.seed(rd()); 
+			dis.reset(); 
+			code1 = dis(gen);
+			cdit =_datas.find(_codeset[code1]);
+		}
+	}
+
+	auto& data = cdit->second;
+	if (pData) {
+		pData->code = data.code;
+		pData->alias = data.alias;
+		memcpy(pData->setcode, data.setcode, SIZE_SETCODE);
+		pData->type = data.type;
+		pData->level = data.level;
+		pData->attribute = data.attribute;
+		pData->race = data.race;
+		pData->attack = data.attack;
+		pData->defense = data.defense;
+		pData->lscale = data.lscale;
+		pData->rscale = data.rscale;
+		pData->link_marker = data.link_marker;
 	}
 	return true;
 }
@@ -412,6 +486,11 @@ std::wstring DataManager::FormatLinkMarker(unsigned int link_marker) const {
 #endif //YGOPRO_SERVER_MODE
 uint32_t DataManager::CardReader(uint32_t code, card_data* pData) {
 	if (!dataManager.GetData(code, pData))
+		pData->clear();
+	return 0;
+}
+uint32_t DataManager::CardReaderRandom(card_data* pData, uint32_t type ,bool is_include) {
+	if (!dataManager.GetDataRandom(pData,type,is_include))
 		pData->clear();
 	return 0;
 }
