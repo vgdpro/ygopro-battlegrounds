@@ -17,6 +17,7 @@ if SERVER_MODE then
             "replay.cpp", "replay.h",
             "netserver.cpp", "netserver.h",
             "single_duel.cpp", "single_duel.h",
+            "sp_duel.cpp", "sp_duel.h",
             "tag_duel.cpp", "tag_duel.h" }
     includedirs { "../ocgcore" }
     links { "ocgcore", "clzma", LUA_LIB_NAME, "sqlite3", "event" }

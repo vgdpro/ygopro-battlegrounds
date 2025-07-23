@@ -1,18 +1,17 @@
-#ifndef SINGLE_DUEL_H
-#define SINGLE_DUEL_H
+#ifndef SP_DUEL_H
+#define SP_DUEL_H
 
 #include <set>
 #include "network.h"
 #include "deck_manager.h"
-#include "sp_duel.h"
 #include "replay.h"
 
 namespace ygo {
-
-class SingleDuel: public DuelMode {
+class SingleDuel;
+class SpDuel: public DuelMode {
 public:
-	SingleDuel(bool is_match);
-	~SingleDuel() override;
+	SpDuel(bool is_match);
+	~SpDuel() override;
 	void Chat(DuelPlayer* dp, unsigned char* pdata, int len) override;
 	void JoinGame(DuelPlayer* dp, unsigned char* pdata, bool is_creater) override;
 	void LeaveGame(DuelPlayer* dp) override;
@@ -58,12 +57,9 @@ public:
 
 	static uint32_t MessageHandler(intptr_t fduel, uint32_t type);
 	static void SingleTimer(evutil_socket_t fd, short events, void* arg);
-	void SPDuelEndProc(int duelid);
+	void SetSingle(SingleDuel* single);
 
-#ifdef YGOPRO_SERVER_MODE
-	DuelPlayer* cache_recorder{};
-	DuelPlayer* replay_recorder{};
-#endif
+	intptr_t pduel{};
 
 private:
 	int WriteUpdateData(int& player, int location, int& flag, unsigned char*& qbuf, int& use_cache);
@@ -72,13 +68,15 @@ protected:
 	DuelPlayer* players[2]{};
 	DuelPlayer* pplayer[2]{};
 	bool ready[2]{};
+	bool is_first;
 	Deck pdeck[2];
-	SpDuel* SPduels[2]{};
 	int deck_error[2]{};
 	unsigned char hand_result[2]{};
 	unsigned char last_response{ 0 };
 	std::set<DuelPlayer*> observers;
 #ifdef YGOPRO_SERVER_MODE
+	DuelPlayer* cache_recorder{};
+	DuelPlayer* replay_recorder{};
 	unsigned char turn_player{ 0 };
 	unsigned short phase{ 0 };
 	bool deck_reversed{ false };
@@ -91,7 +89,7 @@ protected:
 	unsigned char match_result[3]{};
 	short time_limit[2]{};
 	short time_elapsed{ 0 };
-	bool onSpDuel[2]{};
+	SingleDuel* father{};
 #ifdef YGOPRO_SERVER_MODE
 	short time_compensator[2]{};
 	short time_backed[2]{};
@@ -101,4 +99,5 @@ protected:
 
 }
 
-#endif //SINGLE_DUEL_H
+#endif //SP_DUEL_H
+
