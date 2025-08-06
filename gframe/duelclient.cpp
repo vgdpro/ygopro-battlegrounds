@@ -137,9 +137,9 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 				BufferIO::CopyCharArray(L"", cscg.pass);
 				cscg.info.rule = 5;
 				cscg.info.mode = 0;
-				cscg.info.start_hand = 5;
+				cscg.info.start_hand = 0;
 				cscg.info.start_lp = 8000;
-				cscg.info.draw_count = 1;
+				cscg.info.draw_count = 0;
 				cscg.info.time_limit = 0;
 				cscg.info.lflist = 0;
 				cscg.info.duel_rule = mainGame->cbBotRule->getSelected() + 3;
@@ -953,6 +953,9 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 	unsigned char* pbuf = msg;
 	wchar_t textBuffer[256];
 	mainGame->dInfo.curMsg = BufferIO::ReadUInt8(pbuf);
+	FILE *fp = fopen("error.log", "at");
+	fprintf(fp, "msg_local %d\n", mainGame->dInfo.curMsg);
+	fclose(fp);
 	if(mainGame->dInfo.curMsg != MSG_RETRY) {
 		std::memcpy(last_successful_msg, msg, len);
 		last_successful_msg_length = len;
@@ -1298,6 +1301,9 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 		int player = mainGame->LocalPlayer(BufferIO::ReadUInt8(pbuf));
 		int location = BufferIO::ReadUInt8(pbuf);
 		mainGame->gMutex.lock();
+		FILE *fp = fopen("error.log", "at");
+		fprintf(fp, "updatelocation %d\n", location);
+		fclose(fp);
 		mainGame->dField.UpdateFieldCard(player, location, pbuf);
 		mainGame->gMutex.unlock();
 		return true;

@@ -225,7 +225,7 @@ public:
 	virtual void StartDuel(DuelPlayer* dp) = 0;
 	virtual void HandResult(DuelPlayer* dp, unsigned char res) = 0;
 	virtual void TPResult(DuelPlayer* dp, unsigned char tp) = 0;
-	virtual void Process() = 0;
+	virtual void Process(int playerid =-1) = 0;
 	virtual int Analyze(unsigned char* msgbuffer, unsigned int len) = 0;
 	virtual void Surrender(DuelPlayer* dp) = 0;
 	virtual void GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len) = 0;
@@ -238,6 +238,8 @@ public:
 	HostInfo host_info;
 	int duel_stage{};
 	intptr_t pduel{};
+	intptr_t new_pduel{};
+	intptr_t new_pduel2{};
 	wchar_t name[20]{};
 	wchar_t pass[20]{};
 };

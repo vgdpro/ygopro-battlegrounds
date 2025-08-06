@@ -475,7 +475,7 @@ void TagDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	}
 	Process();
 }
-void TagDuel::Process() {
+void TagDuel::Process(int playerid) {
 	std::vector<unsigned char> engineBuffer;
 	engineBuffer.reserve(SIZE_MESSAGE_BUFFER);
 	unsigned int engFlag = 0;

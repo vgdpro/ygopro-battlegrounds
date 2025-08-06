@@ -23,7 +23,7 @@ public:
 	void StartDuel(DuelPlayer* dp) override;
 	void HandResult(DuelPlayer* dp, unsigned char res) override;
 	void TPResult(DuelPlayer* dp, unsigned char tp) override;
-	void Process() override;
+	void Process(int playerid =-1) override;
 	void Surrender(DuelPlayer* dp) override;
 	int Analyze(unsigned char* msgbuffer, unsigned int len) override;
 	void GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len) override;

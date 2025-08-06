@@ -23,7 +23,7 @@ public:
 	void StartDuel(DuelPlayer* dp) override;
 	void HandResult(DuelPlayer* dp, unsigned char res) override;
 	void TPResult(DuelPlayer* dp, unsigned char tp) override;
-	void Process() override;
+	void Process(int playerid =-1) override;
 	void Surrender(DuelPlayer* dp) override;
 	int Analyze(unsigned char* msgbuffer, unsigned int len) override;
 	void GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len) override;
@@ -31,13 +31,22 @@ public:
 	void EndDuel() override;
 	
 	void DuelEndProc();
+	int DispersionAnalyze(unsigned char* msgbuffer, unsigned int len,int playerid);
 	void WaitforResponse(int playerid);
+	void WaitforResponseSingle(int playerid);
 	void RefreshMzone(int player, int flag = 0x881fff, int use_cache = 1);
 	void RefreshSzone(int player, int flag = 0x681fff, int use_cache = 1);
 	void RefreshHand(int player, int flag = 0x681fff, int use_cache = 1);
 	void RefreshGrave(int player, int flag = 0x81fff, int use_cache = 1);
 	void RefreshExtra(int player, int flag = 0xe81fff, int use_cache = 1);
 	void RefreshSingle(int player, int location, int sequence, int flag = 0xf81fff);
+
+	void RefreshMzoneSingle(int player, int flag = 0x881fff, int use_cache = 1);
+	void RefreshSzoneSingle(int player, int flag = 0x681fff, int use_cache = 1);
+	void RefreshHandSingle(int player, int flag = 0x681fff, int use_cache = 1);
+	void RefreshGraveSingle(int player, int flag = 0x81fff, int use_cache = 1);
+	void RefreshExtraSingle(int player, int flag = 0xe81fff, int use_cache = 1);
+	void RefreshSingleSingle(int player, int location, int sequence, int flag = 0xf81fff);
 
 	static uint32_t MessageHandler(intptr_t fduel, uint32_t type);
 	static void SingleTimer(evutil_socket_t fd, short events, void* arg);

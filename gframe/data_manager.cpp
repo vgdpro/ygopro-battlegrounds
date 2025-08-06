@@ -1,6 +1,9 @@
 #include "data_manager.h"
 #include "game.h"
 #include "spmemvfs/spmemvfs.h"
+#include <iostream>
+#include <unordered_map>
+#include <random>
 
 namespace ygo {
 
@@ -25,6 +28,7 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 		step = sqlite3_step(pStmt);
 		if (step == SQLITE_ROW) {
 			cd.code = sqlite3_column_int(pStmt, 0);
+			card_codeset.push_back(cd.code);
 			cd.ot = sqlite3_column_int(pStmt, 1);
 			cd.alias = sqlite3_column_int(pStmt, 2);
 			uint64_t setcode = static_cast<uint64_t>(sqlite3_column_int64(pStmt, 3));
@@ -194,6 +198,41 @@ bool DataManager::GetData(unsigned int code, CardData* pData) const {
 		return false;
 	if (pData) {
 		*pData = cdit->second;
+	}
+	return true;
+}
+bool DataManager::GetDataRandom(CardData* pData ,uint32_t type) {
+    // 使用当前时间作为随机数种子
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, card_codeset.size() - 1);
+
+	int code1 = dis(gen);
+
+	code_pointer cdit = _datas.find(card_codeset[code1]);
+	while (!(cdit->second.type & type) || cdit->second.type & TYPE_TOKEN)
+	{
+		rd(); // 重新初始化 random_device
+    	gen.seed(rd()); // 重新初始化 mt19937
+    	dis.reset(); // 重新初始化 uniform_int_distribution
+		code1 = dis(gen);
+		cdit =_datas.find(card_codeset[code1]);
+	}
+	
+	auto& data = cdit->second;
+	if (pData) {
+		pData->code = data.code;
+		pData->alias = data.alias;
+		memcpy(pData->setcode, data.setcode, SIZE_SETCODE);
+		pData->type = data.type;
+		pData->level = data.level;
+		pData->attribute = data.attribute;
+		pData->race = data.race;
+		pData->attack = data.attack;
+		pData->defense = data.defense;
+		pData->lscale = data.lscale;
+		pData->rscale = data.rscale;
+		pData->link_marker = data.link_marker;
 	}
 	return true;
 }
@@ -384,6 +423,11 @@ std::wstring DataManager::FormatLinkMarker(unsigned int link_marker) const {
 }
 uint32_t DataManager::CardReader(uint32_t code, card_data* pData) {
 	if (!dataManager.GetData(code, pData))
+		pData->clear();
+	return 0;
+}
+uint32_t DataManager::CardReaderRandom(card_data* pData, uint32_t type) {
+	if (!dataManager.GetDataRandom(pData,type))
 		pData->clear();
 	return 0;
 }
