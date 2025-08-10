@@ -1,5 +1,6 @@
 #include "config.h"
 #include "sp_duel.h"
+#include "single_duel.h"
 #include "netserver.h"
 #include "game.h"
 #include "data_manager.h"
@@ -30,6 +31,9 @@ void SpDuel::JoinGame(DuelPlayer* dp, unsigned char* pdata, bool is_creater) {
 			players[1] = dp;
 		}
 	} 
+}
+void SpDuel::SetSingle(SingleDuel* single) {
+	father = single;
 }
 void SpDuel::LeaveGame(DuelPlayer* dp) {
 	if(dp == host_player) {
@@ -486,9 +490,6 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 	while (pbuf - msgbuffer < (int)len) {
 		offset = pbuf;
 		unsigned char engType = BufferIO::ReadUInt8(pbuf);
-		FILE *fp = fopen("error.log", "at");
-		fprintf(fp, "msg1 %d\n", engType);
-		fclose(fp);
 		switch (engType) {
 		case MSG_RETRY: {
 			WaitforResponse(last_response);
@@ -786,14 +787,21 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
 		}
 		case MSG_NEW_PHASE: {
-			pbuf += 2;
-			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-			RefreshMzone(0);
-			RefreshMzone(1);
-			RefreshSzone(0);
-			RefreshSzone(1);
-			RefreshHand(0);
-			RefreshHand(1);
+			int phase = BufferIO::ReadInt16(pbuf);
+			if(phase == PHASE_BATTLE_START){
+				//go end duel
+				father->SPDuelEndProc(players[0]->type);
+				return 1;
+			}
+			else{
+				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+				RefreshMzone(0);
+				RefreshMzone(1);
+				RefreshSzone(0);
+				RefreshSzone(1);
+				RefreshHand(0);
+				RefreshHand(1);
+			}
 			break;
 		}
 		case MSG_MOVE: {
@@ -1107,16 +1115,20 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count * 15;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-			RefreshExtra(0);
-			RefreshExtra(1);
-			RefreshHand(0);
-			RefreshHand(1);
-			RefreshGrave(0);
-			RefreshGrave(1);
-			RefreshMzone(0);
-			RefreshMzone(1);
-			RefreshSzone(0);
-			RefreshSzone(1);
+			RefreshExtra(0,0xf81fff,0);
+			RefreshExtra(1,0xf81fff,0);
+			RefreshHand(0,0xf81fff,0);
+			RefreshHand(1,0xf81fff,0);
+			RefreshGrave(0,0xf81fff,0);
+			RefreshGrave(1,0xf81fff,0);
+			RefreshMzone(0,0xf81fff,0);
+			RefreshMzone(1,0xf81fff,0);
+			RefreshSzone(0,0xf81fff,0);
+			RefreshSzone(1,0xf81fff,0);
+			RefreshDeck(0,0xf81fff,0);
+			RefreshDeck(1,0xf81fff,0);
+			RefreshRemove(0,0xf81fff,0);
+			RefreshRemove(1,0xf81fff,0);
 			break;
 		}
 		case MSG_MATCH_KILL: {
@@ -1151,17 +1163,8 @@ void SpDuel::GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len)
 void SpDuel::EndDuel() {
 	if(!pduel)
 		return;
-	last_replay.EndRecord();
-	char replaybuf[0x2000], *pbuf = replaybuf;
-	std::memcpy(pbuf, &last_replay.pheader, sizeof last_replay.pheader);
-	pbuf += sizeof last_replay.pheader;
-	std::memcpy(pbuf, last_replay.comp_data, last_replay.comp_size);
-	NetServer::SendBufferToPlayer(players[0], STOC_REPLAY, replaybuf, sizeof last_replay.pheader + last_replay.comp_size);
-	NetServer::ReSendToPlayer(players[1]);
-	for(auto oit = observers.begin(); oit != observers.end(); ++oit)
-		NetServer::ReSendToPlayer(*oit);
 	end_duel(pduel);
-	event_del(etimer);
+	// event_del(etimer);
 	pduel = 0;
 }
 void SpDuel::WaitforResponse(int playerid) {
@@ -1274,6 +1277,34 @@ void SpDuel::RefreshExtra(int player, int flag, int use_cache) {
 	auto qbuf = query_buffer.data();
 	auto len = WriteUpdateData(player, LOCATION_EXTRA, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
+}
+void SpDuel::RefreshDeck(int player, int flag, int use_cache) {
+	std::vector<unsigned char> query_buffer;
+	query_buffer.resize(SIZE_QUERY_BUFFER);
+	auto qbuf = query_buffer.data();
+	auto len = WriteUpdateData(player, LOCATION_DECK, flag, qbuf, use_cache);
+	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
+}
+void SpDuel::RefreshRemove(int player, int flag, int use_cache) {
+	std::vector<unsigned char> query_buffer;
+	query_buffer.resize(SIZE_QUERY_BUFFER);
+	auto qbuf = query_buffer.data();
+	auto len = WriteUpdateData(player, LOCATION_REMOVED, flag, qbuf, use_cache);
+	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
+	int qlen = 0;
+	while(qlen < len) {
+		const int clen = BufferIO::ReadInt32(qbuf);
+		qlen += clen;
+		if (clen <= LEN_HEADER)
+			continue;
+		auto position = GetPosition(qbuf, 8);
+		if (position & POS_FACEDOWN)
+			std::memset(qbuf, 0, clen - 4);
+		qbuf += clen - 4;
+	}
+	// NetServer::SendBufferToPlayer(players[1 - player], STOC_GAME_MSG, query_buffer.data(), len + 3);
+	// for(auto pit = observers.begin(); pit != observers.end(); ++pit)
+	// 	NetServer::ReSendToPlayer(*pit);
 }
 void SpDuel::RefreshSingle(int player, int location, int sequence, int flag) {
 	flag |= (QUERY_CODE | QUERY_POSITION);

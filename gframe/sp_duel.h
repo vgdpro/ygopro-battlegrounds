@@ -7,7 +7,7 @@
 #include "replay.h"
 
 namespace ygo {
-
+class SingleDuel;
 class SpDuel: public DuelMode {
 public:
 	SpDuel(bool is_match);
@@ -37,10 +37,15 @@ public:
 	void RefreshHand(int player, int flag = 0x681fff, int use_cache = 1);
 	void RefreshGrave(int player, int flag = 0x81fff, int use_cache = 1);
 	void RefreshExtra(int player, int flag = 0xe81fff, int use_cache = 1);
+	void RefreshDeck(int player, int flag = 0xe81fff, int use_cache = 1);
+	void RefreshRemove(int player, int flag = 0x681fff, int use_cache = 1);
 	void RefreshSingle(int player, int location, int sequence, int flag = 0xf81fff);
 
 	static uint32_t MessageHandler(intptr_t fduel, uint32_t type);
 	static void SingleTimer(evutil_socket_t fd, short events, void* arg);
+	void SetSingle(SingleDuel* single);
+
+	intptr_t pduel{};
 
 private:
 	int WriteUpdateData(int& player, int location, int& flag, unsigned char*& qbuf, int& use_cache);
@@ -51,7 +56,6 @@ protected:
 	bool ready[2]{};
 	bool is_first;
 	Deck pdeck[2];
-	intptr_t pduel{};
 	int deck_error[2]{};
 	unsigned char hand_result[2]{};
 	unsigned char last_response{ 0 };
@@ -64,6 +68,7 @@ protected:
 	unsigned char match_result[3]{};
 	short time_limit[2]{};
 	short time_elapsed{ 0 };
+	SingleDuel* father{};
 };
 
 }

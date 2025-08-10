@@ -941,12 +941,16 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				SPduels[0] = new SpDuel(false);
 				SPduels[0]->JoinGame(players[0], 0, false);
 				SPduels[0]->JoinGame(sp1_p1, 0, false);
+				SPduels[0]->SetSingle(this);
+				onSpDuel[0] = true;
 				SPduels[0]->TPResult(players[0],0);
 
 				DuelPlayer* sp2_p1 = new DuelPlayer();
 				SPduels[1] = new SpDuel(false);
 				SPduels[1]->JoinGame(players[1], 0, true);
 				SPduels[1]->JoinGame(sp2_p1, 0, true);
+				SPduels[1]->SetSingle(this);
+				onSpDuel[1] = true;
 				SPduels[1]->TPResult(players[1],0);
 				return 1;
 				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
@@ -1436,12 +1440,20 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			pbuf += count * 15;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
 			NetServer::ReSendToPlayer(players[1]);
-			RefreshExtra(0);
-			RefreshExtra(1);
-			RefreshHand(0);
-			RefreshHand(1);
-			RefreshGrave(0);
-			RefreshGrave(1);
+			RefreshExtra(0,0xf81fff,0);
+			RefreshExtra(1,0xf81fff,0);
+			RefreshHand(0,0xf81fff,0);
+			RefreshHand(1,0xf81fff,0);
+			RefreshGrave(0,0xf81fff,0);
+			RefreshGrave(1,0xf81fff,0);
+			RefreshMzone(0,0xf81fff,0);
+			RefreshMzone(1,0xf81fff,0);
+			RefreshSzone(0,0xf81fff,0);
+			RefreshSzone(1,0xf81fff,0);
+			RefreshDeck(0,0xf81fff,0);
+			RefreshDeck(1,0xf81fff,0);
+			RefreshRemove(0,0xf81fff,0);
+			RefreshRemove(1,0xf81fff,0);
 			break;
 		}
 		case MSG_MATCH_KILL: {
@@ -1478,9 +1490,6 @@ void SingleDuel::GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int 
 		Process();
 	}
 	else{
-		FILE *fp = fopen("error.log", "at");
-		fprintf(fp, "responsePlayer%d\n", dp->type);
-		fclose(fp);
 		if(dp->type == 0){
 			SPduels[0]->GetResponse(dp,pdata,len);
 		}else{
@@ -1615,6 +1624,34 @@ void SingleDuel::RefreshExtra(int player, int flag, int use_cache) {
 	auto len = WriteUpdateData(player, LOCATION_EXTRA, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, query_buffer.data(), len + 3);
 }
+void SingleDuel::RefreshDeck(int player, int flag, int use_cache) {
+	std::vector<unsigned char> query_buffer;
+	query_buffer.resize(SIZE_QUERY_BUFFER);
+	auto qbuf = query_buffer.data();
+	auto len = WriteUpdateData(player, LOCATION_DECK, flag, qbuf, use_cache);
+	NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, query_buffer.data(), len + 3);
+}
+void SingleDuel::RefreshRemove(int player, int flag, int use_cache) {
+	std::vector<unsigned char> query_buffer;
+	query_buffer.resize(SIZE_QUERY_BUFFER);
+	auto qbuf = query_buffer.data();
+	auto len = WriteUpdateData(player, LOCATION_REMOVED, flag, qbuf, use_cache);
+	NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, query_buffer.data(), len + 3);
+	int qlen = 0;
+	while(qlen < len) {
+		const int clen = BufferIO::ReadInt32(qbuf);
+		qlen += clen;
+		if (clen <= LEN_HEADER)
+			continue;
+		auto position = GetPosition(qbuf, 8);
+		if (position & POS_FACEDOWN)
+			std::memset(qbuf, 0, clen - 4);
+		qbuf += clen - 4;
+	}
+	NetServer::SendBufferToPlayer(players[1 - player], STOC_GAME_MSG, query_buffer.data(), len + 3);
+	for(auto pit = observers.begin(); pit != observers.end(); ++pit)
+		NetServer::ReSendToPlayer(*pit);
+}
 void SingleDuel::RefreshSingle(int player, int location, int sequence, int flag) {
 	flag |= (QUERY_CODE | QUERY_POSITION);
 	unsigned char query_buffer[0x1000];
@@ -1674,5 +1711,40 @@ void SingleDuel::SingleTimer(evutil_socket_t fd, short events, void* arg) {
 	timeval timeout = { 1, 0 };
 	event_add(sd->etimer, &timeout);
 }
+void SingleDuel::SPDuelEndProc(int duelid) {
+	onSpDuel[duelid] = false;
+	if(!onSpDuel[0] && !onSpDuel[1]){
+		intptr_t targetduel = SPduels[0]->pduel;
+		//转移pduel0的数据
+		SPduels[0]->pduel;
 
+
+		unsigned char startbuf[32]{};
+		auto pbuf = startbuf;
+		BufferIO::WriteInt8(pbuf, MSG_START);
+		BufferIO::WriteInt8(pbuf, 0);
+		BufferIO::WriteInt8(pbuf, host_info.duel_rule);
+		BufferIO::WriteInt32(pbuf, host_info.start_lp);
+		BufferIO::WriteInt32(pbuf, host_info.start_lp);
+		BufferIO::WriteInt16(pbuf, query_field_count(pduel, 0, LOCATION_DECK));
+		BufferIO::WriteInt16(pbuf, query_field_count(pduel, 0, LOCATION_EXTRA));
+		BufferIO::WriteInt16(pbuf, query_field_count(pduel, 1, LOCATION_DECK));
+		BufferIO::WriteInt16(pbuf, query_field_count(pduel, 1, LOCATION_EXTRA));
+		NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
+		startbuf[1] = 1;
+		NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
+
+		// new_card(pduel, 17947697, 0, 0, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
+
+
+		//结束决斗并开始处理原来的决斗
+		SPduels[0]->EndDuel();
+		delete SPduels[0];  
+		SPduels[0] = nullptr;
+		SPduels[1]->EndDuel();
+		delete SPduels[1];  
+		SPduels[1] = nullptr;
+		Process();
+	}
+}
 }

@@ -4,6 +4,7 @@
 #include <set>
 #include "network.h"
 #include "deck_manager.h"
+#include "sp_duel.h"
 #include "replay.h"
 
 namespace ygo {
@@ -37,10 +38,13 @@ public:
 	void RefreshHand(int player, int flag = 0x681fff, int use_cache = 1);
 	void RefreshGrave(int player, int flag = 0x81fff, int use_cache = 1);
 	void RefreshExtra(int player, int flag = 0xe81fff, int use_cache = 1);
+	void RefreshDeck(int player, int flag = 0xe81fff, int use_cache = 1);
+	void RefreshRemove(int player, int flag = 0x681fff, int use_cache = 1);
 	void RefreshSingle(int player, int location, int sequence, int flag = 0xf81fff);
 
 	static uint32_t MessageHandler(intptr_t fduel, uint32_t type);
 	static void SingleTimer(evutil_socket_t fd, short events, void* arg);
+	void SPDuelEndProc(int duelid);
 
 private:
 	int WriteUpdateData(int& player, int location, int& flag, unsigned char*& qbuf, int& use_cache);
@@ -48,7 +52,7 @@ private:
 protected:
 	DuelPlayer* players[2]{};
 	DuelPlayer* pplayer[2]{};
-	DuelMode* SPduels[2]{};
+	SpDuel* SPduels[2]{};
 	bool ready[2]{};
 	Deck pdeck[2];
 	int deck_error[2]{};
@@ -63,6 +67,7 @@ protected:
 	unsigned char match_result[3]{};
 	short time_limit[2]{};
 	short time_elapsed{ 0 };
+	bool onSpDuel[2]{};
 };
 
 }
