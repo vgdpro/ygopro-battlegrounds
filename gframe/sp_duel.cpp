@@ -338,6 +338,7 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	time_limit[1] = host_info.time_limit;
 	set_script_reader(DataManager::ScriptReaderEx);
 	set_card_reader(DataManager::CardReader);
+	set_card_reader_random(DataManager::CardReaderRandom);
 	set_message_handler(SpDuel::MessageHandler);
 	pduel = create_duel_v2(rh.seed_sequence);
 	set_player_info(pduel, 0, host_info.start_lp, host_info.start_hand, host_info.draw_count);
@@ -347,7 +348,6 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 		opt |= DUEL_PSEUDO_SHUFFLE;
 	opt |= DUEL_SIMPLE_AI;
 	opt |= DUEL_ONLY_MAIN;
-	opt |= DUEL_ATTACK_FIRST_TURN;
 	
 	// last_replay.WriteInt32(host_info.start_lp, false);
 	// last_replay.WriteInt32(host_info.start_hand, false);
@@ -363,6 +363,12 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	// };
 	new_card(pduel, 17947697, 0, 0, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
 	new_card(pduel, 17947697, 1, 1, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
+	new_card(pduel, 8487449, 0, 0, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
+	new_card(pduel, 8487449, 1, 1, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
+	new_card(pduel, 7625614, 0, 0, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
+	new_card(pduel, 7625614, 1, 1, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
+	new_card(pduel, 7020743, 1, 1, LOCATION_EXTRA, 0, POS_FACEDOWN);
+	new_card(pduel, 7020743, 0, 0, LOCATION_EXTRA, 0, POS_FACEDOWN);
 	// load(pdeck[0].main, 0, LOCATION_DECK);
 	// load(pdeck[0].extra, 0, LOCATION_EXTRA);
 	// load(pdeck[1].main, 1, LOCATION_DECK);
@@ -1121,8 +1127,8 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			RefreshHand(1,0xf81fff,0);
 			RefreshGrave(0,0xf81fff,0);
 			RefreshGrave(1,0xf81fff,0);
-			RefreshMzone(0,0xf81fff,0);
-			RefreshMzone(1,0xf81fff,0);
+			RefreshMzone(0,0xffdfff,0);
+			RefreshMzone(1,0xffdfff,0);
 			RefreshSzone(0,0xf81fff,0);
 			RefreshSzone(1,0xf81fff,0);
 			RefreshDeck(0,0xf81fff,0);

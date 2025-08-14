@@ -432,16 +432,17 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	time_limit[1] = host_info.time_limit;
 	set_script_reader(DataManager::ScriptReaderEx);
 	set_card_reader(DataManager::CardReader);
+	set_card_reader_random(DataManager::CardReaderRandom);
 	set_message_handler(SingleDuel::MessageHandler);
 	pduel = create_duel_v2(rh.seed_sequence);
-	set_player_info(pduel, 0, host_info.start_lp, host_info.start_hand, host_info.draw_count);
-	set_player_info(pduel, 1, host_info.start_lp, host_info.start_hand, host_info.draw_count);
+	set_player_info(pduel, 0, host_info.start_lp, 0, 0);
+	set_player_info(pduel, 1, host_info.start_lp, 0, 0);
 	unsigned int opt = (unsigned int)host_info.duel_rule << 16;
 	if(host_info.no_shuffle_deck)
 		opt |= DUEL_PSEUDO_SHUFFLE;
 	last_replay.WriteInt32(host_info.start_lp, false);
-	last_replay.WriteInt32(host_info.start_hand, false);
-	last_replay.WriteInt32(host_info.draw_count, false);
+	last_replay.WriteInt32(0, false);
+	last_replay.WriteInt32(0, false);
 	last_replay.WriteInt32(opt, false);
 	last_replay.Flush();
 	auto load = [&](const std::vector<code_pointer>& deck_container, uint8_t p, uint8_t location) {
@@ -1446,8 +1447,8 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			RefreshHand(1,0xf81fff,0);
 			RefreshGrave(0,0xf81fff,0);
 			RefreshGrave(1,0xf81fff,0);
-			RefreshMzone(0,0xf81fff,0);
-			RefreshMzone(1,0xf81fff,0);
+			RefreshMzone(0,0xffdfff,0);
+			RefreshMzone(1,0xffdfff,0);
 			RefreshSzone(0,0xf81fff,0);
 			RefreshSzone(1,0xf81fff,0);
 			RefreshDeck(0,0xf81fff,0);
@@ -1714,9 +1715,9 @@ void SingleDuel::SingleTimer(evutil_socket_t fd, short events, void* arg) {
 void SingleDuel::SPDuelEndProc(int duelid) {
 	onSpDuel[duelid] = false;
 	if(!onSpDuel[0] && !onSpDuel[1]){
-		intptr_t targetduel = SPduels[0]->pduel;
-		//转移pduel0的数据
-		SPduels[0]->pduel;
+		copy_duel_data(pduel, SPduels[0]->pduel, 0, 0xffff);
+		copy_duel_data(pduel, SPduels[1]->pduel, 1, 0xffff);
+		//开始新的决斗
 
 
 		unsigned char startbuf[32]{};
