@@ -581,6 +581,9 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 	while (pbuf - msgbuffer < (int)len) {
 		offset = pbuf;
 		unsigned char engType = BufferIO::ReadUInt8(pbuf);
+		FILE *fp = fopen("error.log", "at");
+		fprintf(fp, "msg1 %d\n", engType);
+		fclose(fp);
 		switch (engType) {
 		case MSG_RETRY: {
 			WaitforResponse(last_response);
@@ -965,7 +968,23 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				RefreshHand(0);
 				RefreshHand(1);
 			}
-			else{
+			else if(phase == PHASE_MAIN2){
+				copy_duel_data(pduel, SPduels[0]->pduel, SPduels[1]->pduel, 0x3c);
+				reload_field_info(pduel);
+				//开始新的决斗
+				//结束决斗并开始处理原来的决斗
+				SPduels[0]->EndDuel();
+				delete SPduels[0];  
+				SPduels[0] = nullptr;
+				SPduels[1]->EndDuel();
+				delete SPduels[1];  
+				SPduels[1] = nullptr;
+
+				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+				NetServer::ReSendToPlayer(players[1]);
+				for(auto oit = observers.begin(); oit != observers.end(); ++oit)
+					NetServer::ReSendToPlayer(*oit);
+			}else{
 				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
 				NetServer::ReSendToPlayer(players[1]);
 				for(auto oit = observers.begin(); oit != observers.end(); ++oit)
@@ -1449,8 +1468,8 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			RefreshGrave(1,0xf81fff,0);
 			RefreshMzone(0,0xffdfff,0);
 			RefreshMzone(1,0xffdfff,0);
-			RefreshSzone(0,0xf81fff,0);
-			RefreshSzone(1,0xf81fff,0);
+			RefreshSzone(0,0xffdfff,0);
+			RefreshSzone(1,0xffdfff,0);
 			RefreshDeck(0,0xf81fff,0);
 			RefreshDeck(1,0xf81fff,0);
 			RefreshRemove(0,0xf81fff,0);
@@ -1486,7 +1505,7 @@ void SingleDuel::GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int 
 		else time_limit[dp->type] = 0;
 		time_elapsed = 0;
 	}
-	if(!SPduels[0]){
+	if(!onSpDuel[0] && !onSpDuel[1]){
 		set_responseb(pduel, resb);
 		Process();
 	}
@@ -1715,10 +1734,6 @@ void SingleDuel::SingleTimer(evutil_socket_t fd, short events, void* arg) {
 void SingleDuel::SPDuelEndProc(int duelid) {
 	onSpDuel[duelid] = false;
 	if(!onSpDuel[0] && !onSpDuel[1]){
-		copy_duel_data(pduel, SPduels[0]->pduel, 0, 0xffff);
-		copy_duel_data(pduel, SPduels[1]->pduel, 1, 0xffff);
-		//开始新的决斗
-
 
 		unsigned char startbuf[32]{};
 		auto pbuf = startbuf;
@@ -1735,16 +1750,12 @@ void SingleDuel::SPDuelEndProc(int duelid) {
 		startbuf[1] = 1;
 		NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
 
+		copy_duel_data(pduel, SPduels[0]->pduel, SPduels[1]->pduel, 0xffff);
+		reload_field_info(pduel);
+
 		// new_card(pduel, 17947697, 0, 0, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
 
 
-		//结束决斗并开始处理原来的决斗
-		SPduels[0]->EndDuel();
-		delete SPduels[0];  
-		SPduels[0] = nullptr;
-		SPduels[1]->EndDuel();
-		delete SPduels[1];  
-		SPduels[1] = nullptr;
 		Process();
 	}
 }

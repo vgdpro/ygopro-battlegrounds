@@ -319,12 +319,12 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	// dp->state = CTOS_RESPONSE;
 	std::random_device rd;
 	ExtendedReplayHeader rh;
-	// rh.base.id = REPLAY_ID_YRP2;
-	// rh.base.version = PRO_VERSION;
-	// rh.base.flag = REPLAY_UNIFORM;
-	// rh.base.start_time = (uint32_t)std::time(nullptr);
-	// for (auto& x : rh.seed_sequence)
-	// 	x = rd();
+	rh.base.id = REPLAY_ID_YRP2;
+	rh.base.version = PRO_VERSION;
+	rh.base.flag = REPLAY_UNIFORM;
+	rh.base.start_time = (uint32_t)std::time(nullptr);
+	for (auto& x : rh.seed_sequence)
+		x = rd();
 	mtrandom rnd(rh.seed_sequence, SEED_COUNT);
 	// last_replay.BeginRecord();
 	// last_replay.WriteHeader(rh);
@@ -361,12 +361,20 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	// 		last_replay.WriteInt32((*cit)->first, false);
 	// 	}
 	// };
-	new_card(pduel, 17947697, 0, 0, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
-	new_card(pduel, 17947697, 1, 1, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
-	new_card(pduel, 8487449, 0, 0, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
-	new_card(pduel, 8487449, 1, 1, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
-	new_card(pduel, 7625614, 0, 0, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
-	new_card(pduel, 7625614, 1, 1, LOCATION_HAND, 0, POS_FACEUP_ATTACK);
+	new_card(pduel, 17947697, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
+	new_card(pduel, 17947697, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
+	new_card(pduel, 8487449, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
+	new_card(pduel, 8487449, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
+	new_card(pduel, 76754619, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
+	new_card(pduel, 76754619, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
+	new_card(pduel, 74137509, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
+	new_card(pduel, 74137509, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
+	new_card(pduel, 2196767, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
+	new_card(pduel, 2196767, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
+	new_card(pduel, 44146295, 0, 0, LOCATION_MZONE, 1, POS_FACEUP);
+	new_card(pduel, 44146295, 1, 1, LOCATION_MZONE, 1, POS_FACEUP);
+	new_card(pduel, 53129443, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
+	new_card(pduel, 53129443, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
 	new_card(pduel, 7020743, 1, 1, LOCATION_EXTRA, 0, POS_FACEDOWN);
 	new_card(pduel, 7020743, 0, 0, LOCATION_EXTRA, 0, POS_FACEDOWN);
 	// load(pdeck[0].main, 0, LOCATION_DECK);
@@ -400,6 +408,7 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	// 	timeval timeout = { 1, 0 };
 	// 	event_add(etimer, &timeout);
 	// }
+	reload_field_info(pduel);
 	Process();
 }
 void SpDuel::Process() {
@@ -708,6 +717,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count * 7;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_CONFIRM_EXTRATOP: {
 			player = BufferIO::ReadUInt8(pbuf);
@@ -729,6 +739,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_SHUFFLE_DECK: {
 			player = BufferIO::ReadUInt8(pbuf);
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_SHUFFLE_HAND: {
 			player = BufferIO::ReadUInt8(pbuf);
@@ -751,6 +762,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_REFRESH_DECK: {
 			pbuf++;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_SWAP_GRAVE_DECK: {
 			player = BufferIO::ReadUInt8(pbuf);
@@ -760,10 +772,12 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		}
 		case MSG_REVERSE_DECK: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_DECK_TOP: {
 			pbuf += 6;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_SHUFFLE_SET_CARD: {
 			unsigned int loc = BufferIO::ReadUInt8(pbuf);
@@ -791,6 +805,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			time_limit[0] = host_info.time_limit;
 			time_limit[1] = host_info.time_limit;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_NEW_PHASE: {
 			int phase = BufferIO::ReadInt16(pbuf);
@@ -844,6 +859,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			BufferIO::WriteInt32(pbuf, 0);
 			pbuf += 4;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_SWAP: {
 			int c1 = pbuf[4];
@@ -861,10 +877,12 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_FIELD_DISABLED: {
 			pbuf += 4;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_SUMMONING: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_SUMMONED: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
@@ -877,6 +895,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_SPSUMMONING: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_SPSUMMONED: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
@@ -890,6 +909,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			RefreshSingle(pbuf[4], pbuf[5], pbuf[6]);
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_FLIPSUMMONED: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
@@ -902,6 +922,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_CHAINING: {
 			pbuf += 16;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_CHAINED: {
 			pbuf++;
@@ -917,6 +938,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_CHAIN_SOLVING: {
 			pbuf++;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_CHAIN_SOLVED: {
 			pbuf++;
@@ -942,10 +964,12 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_CHAIN_NEGATED: {
 			pbuf++;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_CHAIN_DISABLED: {
 			pbuf++;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_CARD_SELECTED: {
 			player = BufferIO::ReadUInt8(pbuf);
@@ -964,6 +988,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count * 4;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_DRAW: {
 			player = BufferIO::ReadUInt8(pbuf);
@@ -982,53 +1007,66 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_DAMAGE: {
 			pbuf += 5;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_RECOVER: {
 			pbuf += 5;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_EQUIP: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_LPUPDATE: {
 			pbuf += 5;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_UNEQUIP: {
 			pbuf += 4;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_CARD_TARGET: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_CANCEL_TARGET: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_PAY_LPCOST: {
 			pbuf += 5;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_ADD_COUNTER: {
 			pbuf += 7;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_REMOVE_COUNTER: {
 			pbuf += 7;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_ATTACK: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_BATTLE: {
 			pbuf += 26;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_ATTACK_DISABLED: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_DAMAGE_STEP_START: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
@@ -1053,12 +1091,14 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_TOSS_DICE: {
 			player = BufferIO::ReadUInt8(pbuf);
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_ROCK_PAPER_SCISSORS: {
 			player = BufferIO::ReadUInt8(pbuf);
@@ -1097,10 +1137,12 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_CARD_HINT: {
 			pbuf += 9;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_PLAYER_HINT: {
 			pbuf += 6;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			break;
 		}
 		case MSG_RELOAD_FIELD: {
 			pbuf++;
@@ -1129,8 +1171,8 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			RefreshGrave(1,0xf81fff,0);
 			RefreshMzone(0,0xffdfff,0);
 			RefreshMzone(1,0xffdfff,0);
-			RefreshSzone(0,0xf81fff,0);
-			RefreshSzone(1,0xf81fff,0);
+			RefreshSzone(0,0xffdfff,0);
+			RefreshSzone(1,0xffdfff,0);
 			RefreshDeck(0,0xf81fff,0);
 			RefreshDeck(1,0xf81fff,0);
 			RefreshRemove(0,0xf81fff,0);
