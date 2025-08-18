@@ -201,8 +201,31 @@ bool DataManager::GetData(unsigned int code, CardData* pData) const {
 	}
 	return true;
 }
+std::vector<unsigned int> DataManager::GenerateRandomCardCodes(int count, uint32_t type,bool is_include) {
+    std::vector<unsigned int> candidates;
+    candidates.reserve(_codeset.size());
+    for(unsigned int code : _codeset){
+        auto it = _datas.find(code);
+        if(it == _datas.end()) continue;
+        const auto &d = it->second;
+        if(d.type & TYPE_TOKEN) continue; 
+        if(is_include){
+			if(type == 0 || (d.type & type))
+            candidates.push_back(code);
+		}else{
+			if(type == 0 || !(d.type & type))
+            candidates.push_back(code);
+		}
+    }
+    if(candidates.empty()) return {};
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::shuffle(candidates.begin(), candidates.end(), gen);
+    if(count <= 0) return {};
+    if((size_t)count >= candidates.size()) return candidates;
+    return std::vector<unsigned int>(candidates.begin(), candidates.begin() + count);
+}
 bool DataManager::GetDataRandom(CardData* pData ,uint32_t type , bool is_include) {
-    // 使用当前时间作为随机数种子
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, _codeset.size() - 1);
@@ -213,9 +236,9 @@ bool DataManager::GetDataRandom(CardData* pData ,uint32_t type , bool is_include
 	if(is_include){
 		while (!(cdit->second.type & type) || cdit->second.type & TYPE_TOKEN)
 		{
-			rd(); // 重新初始化 random_device
-			gen.seed(rd()); // 重新初始化 mt19937
-			dis.reset(); // 重新初始化 uniform_int_distribution
+			rd(); 
+			gen.seed(rd()); 
+			dis.reset(); 
 			code1 = dis(gen);
 			cdit =_datas.find(_codeset[code1]);
 		}
@@ -223,9 +246,9 @@ bool DataManager::GetDataRandom(CardData* pData ,uint32_t type , bool is_include
 	else{
 		while ((cdit->second.type & type) || cdit->second.type & TYPE_TOKEN)
 		{
-			rd(); // 重新初始化 random_device
-			gen.seed(rd()); // 重新初始化 mt19937
-			dis.reset(); // 重新初始化 uniform_int_distribution
+			rd(); 
+			gen.seed(rd()); 
+			dis.reset(); 
 			code1 = dis(gen);
 			cdit =_datas.find(_codeset[code1]);
 		}

@@ -361,22 +361,7 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	// 		last_replay.WriteInt32((*cit)->first, false);
 	// 	}
 	// };
-	new_card(pduel, 17947697, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 17947697, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 8487449, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 8487449, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 76754619, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 76754619, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 74137509, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 74137509, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 2196767, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 2196767, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 44146295, 0, 0, LOCATION_MZONE, 1, POS_FACEUP);
-	new_card(pduel, 44146295, 1, 1, LOCATION_MZONE, 1, POS_FACEUP);
-	new_card(pduel, 53129443, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 53129443, 1, 1, LOCATION_HAND, 0, POS_FACEDOWN);
-	new_card(pduel, 7020743, 1, 1, LOCATION_EXTRA, 0, POS_FACEDOWN);
-	new_card(pduel, 7020743, 0, 0, LOCATION_EXTRA, 0, POS_FACEDOWN);
+
 	// load(pdeck[0].main, 0, LOCATION_DECK);
 	// load(pdeck[0].extra, 0, LOCATION_EXTRA);
 	// load(pdeck[1].main, 1, LOCATION_DECK);
@@ -403,6 +388,24 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	// RefreshExtra(0);
 	// RefreshExtra(1);
 	start_duel(pduel, opt);
+
+	copy_field_data(pduel,father->pduel,0x3c,0,dp->type);
+
+	std::vector<unsigned int> more;
+	more.reserve(30);
+	std::vector<unsigned int> extra = dataManager.GenerateRandomCardCodes(10, TYPES_EXTRA_DECK,true);
+	std::vector<unsigned int> main_deck = dataManager.GenerateRandomCardCodes(15, TYPES_EXTRA_DECK|TYPE_SPELL|TYPE_TRAP,false);
+	more = dataManager.GenerateRandomCardCodes(8, TYPE_SPELL,true);
+	main_deck.insert(main_deck.end(), more.begin(), more.end());
+	more = dataManager.GenerateRandomCardCodes(2, TYPE_TRAP,true);
+	main_deck.insert(main_deck.end(), more.begin(), more.end());
+
+	for(auto it:extra){
+		new_card(pduel, it, 0, 0, LOCATION_EXTRA, 0, POS_FACEDOWN_DEFENSE);
+	}
+	for(auto it:main_deck){
+		new_card(pduel, it, 0, 0, LOCATION_DECK, 0, POS_FACEDOWN_DEFENSE);
+	}
 	// if(host_info.time_limit) {
 	// 	time_elapsed = 0;
 	// 	timeval timeout = { 1, 0 };

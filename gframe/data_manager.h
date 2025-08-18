@@ -68,6 +68,7 @@ public:
 	const wchar_t* GetCounterName(int code) const;
 	const wchar_t* GetSetName(int code) const;
 	std::vector<unsigned int> GetSetCodes(std::wstring setname) const;
+	std::vector<unsigned int> GenerateRandomCardCodes(int count, uint32_t type,bool is_include);
 	std::wstring GetNumString(int num, bool bracket = false) const;
 	const wchar_t* FormatLocation(int location, int sequence) const;
 	std::wstring FormatAttribute(unsigned int attribute) const;
