@@ -269,6 +269,9 @@ jobs:
     needs: [build-windows]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 添加必要的权限
+      releases: write  # 允许创建发布
 
     steps:
     - name: Download build artifacts
