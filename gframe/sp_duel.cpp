@@ -1547,7 +1547,7 @@ void SpDuel::WaitforResponse(int playerid) {
 	last_response = playerid;
 	// unsigned char msg = MSG_WAITING;
 	// NetServer::SendPacketToPlayer(players[1 - playerid], STOC_GAME_MSG, msg);
-	if(father->host_info.time_limit) {
+	if(host_info.time_limit) {
 		STOC_TimeLimit sctl;
 		sctl.player = playerid;
 		sctl.left_time = time_limit[playerid];
