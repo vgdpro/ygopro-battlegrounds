@@ -434,21 +434,21 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	// last_replay.WriteHeader(rh);
 	// last_replay.WriteData(players[0]->name, 40, false);
 	// last_replay.WriteData(players[1]->name, 40, false);
-	if(!father->host_info.no_shuffle_deck) {
+	if(!host_info.no_shuffle_deck) {
 		rnd.shuffle_vector(pdeck[0].main);
 		rnd.shuffle_vector(pdeck[1].main);
 	}
-	time_limit[0] = father->host_info.time_limit;
-	time_limit[1] = father->host_info.time_limit;
+	time_limit[0] = host_info.time_limit;
+	time_limit[1] = host_info.time_limit;
 	set_script_reader(DataManager::ScriptReaderEx);
 	set_card_reader(DataManager::CardReader);
 	set_card_reader_random(DataManager::CardReaderRandom);
 	set_message_handler(SpDuel::MessageHandler);
 	pduel = create_duel_v2(rh.seed_sequence);
-	set_player_info(pduel, 0, father->host_info.start_lp, 0, 0);
-	set_player_info(pduel, 1, father->host_info.start_lp, 0, 0);
-	unsigned int opt = (unsigned int)father->host_info.duel_rule << 16;
-	if(father->host_info.no_shuffle_deck)
+	set_player_info(pduel, 0, host_info.start_lp, 0, 0);
+	set_player_info(pduel, 1, host_info.start_lp, 0, 0);
+	unsigned int opt = (unsigned int)host_info.duel_rule << 16;
+	if(host_info.no_shuffle_deck)
 		opt |= DUEL_PSEUDO_SHUFFLE;
 	opt |= DUEL_SIMPLE_AI;
 	opt |= DUEL_ONLY_MAIN;
@@ -519,13 +519,13 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	for(auto it:main_deck){
 		new_card(pduel, it, 0, 0, LOCATION_DECK, 0, POS_FACEDOWN_DEFENSE);
 	}
-	if(father->host_info.time_limit) {
+	if(host_info.time_limit) {
 		time_elapsed = 0;
 #ifdef YGOPRO_SERVER_MODE
-		time_compensator[0] = father->host_info.time_limit;
-		time_compensator[1] = father->host_info.time_limit;
-		time_backed[0] = father->host_info.time_limit;
-		time_backed[1] = father->host_info.time_limit;
+		time_compensator[0] = host_info.time_limit;
+		time_compensator[1] = host_info.time_limit;
+		time_backed[0] = host_info.time_limit;
+		time_backed[1] = host_info.time_limit;
 		last_game_msg = 0;
 #endif
 		timeval timeout = { 1, 0 };
@@ -985,13 +985,13 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 #else
 			pbuf++;
 #endif
-			time_limit[0] = father->host_info.time_limit;
-			time_limit[1] = father->host_info.time_limit;
+			time_limit[0] = host_info.time_limit;
+			time_limit[1] = host_info.time_limit;
 #ifdef YGOPRO_SERVER_MODE
-			time_compensator[0] = father->host_info.time_limit;
-			time_compensator[1] = father->host_info.time_limit;
-			time_backed[0] = father->host_info.time_limit;
-			time_backed[1] = father->host_info.time_limit;
+			time_compensator[0] = host_info.time_limit;
+			time_compensator[1] = host_info.time_limit;
+			time_backed[0] = host_info.time_limit;
+			time_backed[1] = host_info.time_limit;
 #endif
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
 #ifdef YGOPRO_SERVER_MODE
@@ -1521,13 +1521,13 @@ void SpDuel::GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len)
 	last_replay.WriteData(resb, len);
 	set_responseb(pduel, resb);
 	players[dp->type]->state = 0xff;
-	if(father->host_info.time_limit) {
+	if(host_info.time_limit) {
 		if(time_limit[dp->type] >= time_elapsed)
 			time_limit[dp->type] -= time_elapsed;
 		else time_limit[dp->type] = 0;
 		time_elapsed = 0;
 #ifdef YGOPRO_SERVER_MODE
-		if(time_backed[dp->type] > 0 && time_limit[dp->type] < father->host_info.time_limit && NetServer::IsCanIncreaseTime(last_game_msg, pdata, len)) {
+		if(time_backed[dp->type] > 0 && time_limit[dp->type] < host_info.time_limit && NetServer::IsCanIncreaseTime(last_game_msg, pdata, len)) {
 			++time_limit[dp->type];
 			++time_compensator[dp->type];
 			--time_backed[dp->type];
@@ -1574,10 +1574,10 @@ void SpDuel::RequestField(DuelPlayer* dp) {
 
 	WriteMsg([&](uint8_t*& pbuf) {
 		BufferIO::WriteInt8(pbuf, MSG_START);
-		BufferIO::WriteInt8(pbuf, player);
-		BufferIO::WriteInt8(pbuf, father->host_info.duel_rule);
-		BufferIO::WriteInt32(pbuf, father->host_info.start_lp);
-		BufferIO::WriteInt32(pbuf, father->host_info.start_lp);
+		BufferIO::WriteInt8(pbuf, 0);
+		BufferIO::WriteInt8(pbuf, 5);
+		BufferIO::WriteInt32(pbuf, 8000);
+		BufferIO::WriteInt32(pbuf, 8000);
 		BufferIO::WriteInt16(pbuf, 0);
 		BufferIO::WriteInt16(pbuf, 0);
 		BufferIO::WriteInt16(pbuf, 0);
@@ -1666,7 +1666,7 @@ void SpDuel::RequestField(DuelPlayer* dp) {
 }
 #endif //YGOPRO_SERVER_MODE
 void SpDuel::TimeConfirm(DuelPlayer* dp) {
-	if(father->host_info.time_limit == 0)
+	if(host_info.time_limit == 0)
 		return;
 	if(dp->type != last_response)
 		return;
