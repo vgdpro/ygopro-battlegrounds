@@ -133,15 +133,11 @@ jobs:
       fail-fast: false
       matrix:
         name:
-          - ubuntu-18
           - ubuntu-22
           - ubuntu-24
           - ubuntu-static-link
           - ubuntu-zip-support
         include:
-          - name: ubuntu-18
-            os: ubuntu-18.04
-            premake-version: 5.0.0-beta4
           - name: ubuntu-22
             os: ubuntu-22.04
             premake-version: 5.0.0-beta4
