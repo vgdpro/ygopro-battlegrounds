@@ -341,8 +341,8 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	set_card_reader_random(DataManager::CardReaderRandom);
 	set_message_handler(SpDuel::MessageHandler);
 	pduel = create_duel_v2(rh.seed_sequence);
-	set_player_info(pduel, 0, host_info.start_lp, host_info.start_hand, host_info.draw_count);
-	set_player_info(pduel, 1, host_info.start_lp, host_info.start_hand, host_info.draw_count);
+	set_player_info(pduel, 0, host_info.start_lp, 0, 0);
+	set_player_info(pduel, 1, host_info.start_lp, 0, 0);
 	unsigned int opt = (unsigned int)host_info.duel_rule << 16;
 	if(host_info.no_shuffle_deck)
 		opt |= DUEL_PSEUDO_SHUFFLE;
@@ -399,6 +399,8 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	main_deck.insert(main_deck.end(), more.begin(), more.end());
 	more = dataManager.GenerateRandomCardCodes(2, TYPE_TRAP,true);
 	main_deck.insert(main_deck.end(), more.begin(), more.end());
+
+	new_card(pduel, 74191942, 0, 0, LOCATION_HAND, 0, POS_FACEDOWN_DEFENSE);
 
 	for(auto it:extra){
 		new_card(pduel, it, 0, 0, LOCATION_EXTRA, 0, POS_FACEDOWN_DEFENSE);
