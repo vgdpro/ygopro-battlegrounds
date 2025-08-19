@@ -25,12 +25,6 @@ void SpDuel::Chat(DuelPlayer* dp, unsigned char* pdata, int len) {
 	NetServer::ReSendToPlayer(players[1]);
 	for(auto pit = observers.begin(); pit != observers.end(); ++pit)
 		NetServer::ReSendToPlayer(*pit);
-#ifdef YGOPRO_SERVER_MODE
-	if(cache_recorder)
-		NetServer::ReSendToPlayer(cache_recorder);
-	if(replay_recorder && replay_mode & REPLAY_MODE_INCLUDE_CHAT)
-		NetServer::ReSendToPlayer(replay_recorder);
-#endif
 }
 void SpDuel::JoinGame(DuelPlayer* dp, unsigned char* pdata, bool is_creater) {
 	if(!players[0] || !players[1]) {
@@ -86,12 +80,6 @@ void SpDuel::LeaveGame(DuelPlayer* dp) {
 				NetServer::SendPacketToPlayer(players[1], STOC_HS_WATCH_CHANGE, scwc);
 			for(auto pit = observers.begin(); pit != observers.end(); ++pit)
 				NetServer::SendPacketToPlayer(*pit, STOC_HS_WATCH_CHANGE, scwc);
-#ifdef YGOPRO_SERVER_MODE
-			if(cache_recorder)
-				NetServer::SendPacketToPlayer(cache_recorder, STOC_HS_WATCH_CHANGE, scwc);
-			if(replay_recorder)
-				NetServer::SendPacketToPlayer(replay_recorder, STOC_HS_WATCH_CHANGE, scwc);
-#endif
 		}
 		NetServer::DisconnectPlayer(dp);
 	} else {
@@ -106,12 +94,6 @@ void SpDuel::LeaveGame(DuelPlayer* dp) {
 				NetServer::SendPacketToPlayer(players[1], STOC_HS_PLAYER_CHANGE, scpc);
 			for(auto pit = observers.begin(); pit != observers.end(); ++pit)
 				NetServer::SendPacketToPlayer(*pit, STOC_HS_PLAYER_CHANGE, scpc);
-#ifdef YGOPRO_SERVER_MODE
-			if(cache_recorder)
-				NetServer::SendPacketToPlayer(cache_recorder, STOC_HS_PLAYER_CHANGE, scpc);
-			if(replay_recorder)
-				NetServer::SendPacketToPlayer(replay_recorder, STOC_HS_PLAYER_CHANGE, scpc);
-#endif
 			NetServer::DisconnectPlayer(dp);
 		} else {
 			if(duel_stage == DUEL_STAGE_SIDING) {
@@ -129,18 +111,11 @@ void SpDuel::LeaveGame(DuelPlayer* dp) {
 				NetServer::ReSendToPlayer(players[1]);
 				for(auto oit = observers.begin(); oit != observers.end(); ++oit)
 					NetServer::ReSendToPlayer(*oit);
-#ifdef YGOPRO_SERVER_MODE
-				NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
 				EndDuel();
 				NetServer::SendPacketToPlayer(players[0], STOC_DUEL_END);
 				NetServer::ReSendToPlayer(players[1]);
 				for(auto oit = observers.begin(); oit != observers.end(); ++oit)
 					NetServer::ReSendToPlayer(*oit);
-#ifdef YGOPRO_SERVER_MODE
-				NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-				NetServer::StopServer();
-#endif
 			}
 #ifndef YGOPRO_SERVER_MODE
 			NetServer::DisconnectPlayer(dp);
@@ -177,16 +152,6 @@ void SpDuel::ToDuelist(DuelPlayer* dp) {
 		NetServer::SendPacketToPlayer(*pit, STOC_HS_PLAYER_ENTER, scpe);
 		NetServer::SendPacketToPlayer(*pit, STOC_HS_WATCH_CHANGE, scwc);
 	}
-#ifdef YGOPRO_SERVER_MODE
-	if(cache_recorder) {
-		NetServer::SendPacketToPlayer(cache_recorder, STOC_HS_PLAYER_ENTER, scpe);
-		NetServer::SendPacketToPlayer(cache_recorder, STOC_HS_WATCH_CHANGE, scwc);
-	}
-	if(replay_recorder) {
-		NetServer::SendPacketToPlayer(replay_recorder, STOC_HS_PLAYER_ENTER, scpe);
-		NetServer::SendPacketToPlayer(replay_recorder, STOC_HS_WATCH_CHANGE, scwc);
-	}
-#endif
 	STOC_TypeChange sctc;
 	sctc.type = (dp == host_player ? 0x10 : 0) | dp->type;
 	NetServer::SendPacketToPlayer(dp, STOC_TYPE_CHANGE, sctc);
@@ -202,12 +167,6 @@ void SpDuel::ToObserver(DuelPlayer* dp) {
 		NetServer::SendPacketToPlayer(players[1], STOC_HS_PLAYER_CHANGE, scpc);
 	for(auto pit = observers.begin(); pit != observers.end(); ++pit)
 		NetServer::SendPacketToPlayer(*pit, STOC_HS_PLAYER_CHANGE, scpc);
-#ifdef YGOPRO_SERVER_MODE
-	if(cache_recorder)
-		NetServer::SendPacketToPlayer(cache_recorder, STOC_HS_PLAYER_CHANGE, scpc);
-	if(replay_recorder)
-		NetServer::SendPacketToPlayer(replay_recorder, STOC_HS_PLAYER_CHANGE, scpc);
-#endif
 	players[dp->type] = 0;
 	ready[dp->type] = false;
 	dp->type = NETPLAYER_TYPE_OBSERVER;
@@ -249,12 +208,6 @@ void SpDuel::PlayerReady(DuelPlayer* dp, bool is_ready) {
 		NetServer::SendPacketToPlayer(players[1 - dp->type], STOC_HS_PLAYER_CHANGE, scpc);
 	for(auto pit = observers.begin(); pit != observers.end(); ++pit)
 		NetServer::SendPacketToPlayer(*pit, STOC_HS_PLAYER_CHANGE, scpc);
-#ifdef YGOPRO_SERVER_MODE
-	if(cache_recorder)
-		NetServer::SendPacketToPlayer(cache_recorder, STOC_HS_PLAYER_CHANGE, scpc);
-	if(replay_recorder)
-		NetServer::SendPacketToPlayer(replay_recorder, STOC_HS_PLAYER_CHANGE, scpc);
-#endif
 }
 void SpDuel::PlayerKick(DuelPlayer* dp, unsigned char pos) {
 	if(pos > 1 || dp != host_player || dp == players[pos] || !players[pos])
@@ -325,13 +278,6 @@ void SpDuel::StartDuel(DuelPlayer* dp) {
 		(*oit)->state = CTOS_LEAVE_GAME;
 		NetServer::ReSendToPlayer(*oit);
 	}
-#ifdef YGOPRO_SERVER_MODE
-	if(cache_recorder)
-		cache_recorder->state = CTOS_LEAVE_GAME;
-	if(replay_recorder)
-		replay_recorder->state = CTOS_LEAVE_GAME;
-	NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
 	unsigned char deckbuff[12];
 	auto pbuf = deckbuff;
 	BufferIO::WriteInt16(pbuf, (short)pdeck[0].main.size());
@@ -367,9 +313,6 @@ void SpDuel::HandResult(DuelPlayer* dp, unsigned char res) {
 		NetServer::SendPacketToPlayer(players[0], STOC_HAND_RESULT, schr);
 		for(auto oit = observers.begin(); oit != observers.end(); ++oit)
 			NetServer::ReSendToPlayer(*oit);
-#ifdef YGOPRO_SERVER_MODE
-		NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
 		schr.res1 = hand_result[1];
 		schr.res2 = hand_result[0];
 		NetServer::SendPacketToPlayer(players[1], STOC_HAND_RESULT, schr);
@@ -484,10 +427,6 @@ void SpDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	BufferIO::WriteInt16(pbuf, 0);
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
 #ifdef YGOPRO_SERVER_MODE
-	if(cache_recorder)
-		NetServer::SendBufferToPlayer(cache_recorder, STOC_GAME_MSG, startbuf, 19);
-	if(replay_recorder)
-		NetServer::SendBufferToPlayer(replay_recorder, STOC_GAME_MSG, startbuf, 19);
 	turn_player = 0;
 	phase = 1;
 	deck_reversed = false;
@@ -563,7 +502,6 @@ void SpDuel::DuelEndProc() {
 		for(auto oit = observers.begin(); oit != observers.end(); ++oit)
 			NetServer::ReSendToPlayer(*oit);
 #ifdef YGOPRO_SERVER_MODE
-		NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
 		NetServer::StopServer();
 #else
 		duel_stage = DUEL_STAGE_END;
@@ -581,7 +519,6 @@ void SpDuel::DuelEndProc() {
 			for(auto oit = observers.begin(); oit != observers.end(); ++oit)
 				NetServer::ReSendToPlayer(*oit);
 #ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
 			NetServer::StopServer();
 #else
 			duel_stage = DUEL_STAGE_END;
@@ -604,12 +541,6 @@ void SpDuel::DuelEndProc() {
 			NetServer::SendPacketToPlayer(players[1], STOC_CHANGE_SIDE);
 			for(auto oit = observers.begin(); oit != observers.end(); ++oit)
 				NetServer::SendPacketToPlayer(*oit, STOC_WAITING_SIDE);
-#ifdef YGOPRO_SERVER_MODE
-			if(cache_recorder)
-				NetServer::SendPacketToPlayer(cache_recorder, STOC_WAITING_SIDE);
-			if(replay_recorder)
-				NetServer::SendPacketToPlayer(replay_recorder, STOC_WAITING_SIDE);
-#endif
 			duel_stage = DUEL_STAGE_SIDING;
 		}
 	}
@@ -626,9 +557,6 @@ void SpDuel::Surrender(DuelPlayer* dp) {
 	NetServer::ReSendToPlayer(players[1]);
 	for(auto oit = observers.begin(); oit != observers.end(); ++oit)
 		NetServer::ReSendToPlayer(*oit);
-#ifdef YGOPRO_SERVER_MODE
-	NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
 	if(players[player] == pplayer[player]) {
 		match_result[duel_count++] = 1 - player;
 		tp_player = player;
@@ -671,9 +599,6 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				}
 				case 10: {
 					NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-					NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
 				}
 				}
 			}
@@ -865,9 +790,6 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count * 7;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
 			break;
 		}
 		case MSG_CONFIRM_EXTRATOP: {
@@ -875,9 +797,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count * 7;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_CONFIRM_CARDS: {
@@ -893,18 +813,14 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_SHUFFLE_DECK: {
 			player = BufferIO::ReadUInt8(pbuf);
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_SHUFFLE_HAND: {
 			player = BufferIO::ReadUInt8(pbuf);
 			count = BufferIO::ReadUInt8(pbuf);
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, (pbuf - offset) + count * 4);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			for(int i = 0; i < count; ++i)
 				BufferIO::WriteInt32(pbuf, 0);
 			RefreshHand(player, 0x781fff, 0);
@@ -914,9 +830,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			player = BufferIO::ReadUInt8(pbuf);
 			count = BufferIO::ReadUInt8(pbuf);
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, (pbuf - offset) + count * 4);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			for (int i = 0; i < count; ++i)
 				BufferIO::WriteInt32(pbuf, 0);
 			RefreshExtra(player);
@@ -925,24 +839,19 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_REFRESH_DECK: {
 			pbuf++;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_SWAP_GRAVE_DECK: {
 			player = BufferIO::ReadUInt8(pbuf);
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			RefreshGrave(player);
 			break;
 		}
 		case MSG_REVERSE_DECK: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
 #ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
 			deck_reversed = !deck_reversed;
 #endif
 			break;
@@ -950,9 +859,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_DECK_TOP: {
 			pbuf += 6;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_SHUFFLE_SET_CARD: {
@@ -960,9 +867,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count * 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			if(loc == LOCATION_MZONE) {
 				RefreshMzone(0, 0x181fff, 0);
 				RefreshMzone(1, 0x181fff, 0);
@@ -994,9 +899,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			time_backed[1] = host_info.time_limit;
 #endif
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_NEW_PHASE: {
@@ -1008,9 +911,6 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			}
 			else{
 				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-				NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
 				RefreshMzone(0);
 				RefreshMzone(1);
 				RefreshSzone(0);
@@ -1034,9 +934,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
 			if (!(cl & (LOCATION_GRAVE + LOCATION_OVERLAY)) && ((cl & (LOCATION_DECK + LOCATION_HAND)) || (cp & POS_FACEDOWN)))
 				BufferIO::WriteInt32(pbufw, 0);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			if (cl != 0 && (cl & LOCATION_OVERLAY) == 0 && (cl != pl || pc != cc))
 				RefreshSingle(cc, cl, cs);
 			break;
@@ -1049,9 +947,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			int cp = pbuf[8];
 			pbuf += 9;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			if((pp & POS_FACEDOWN) && (cp & POS_FACEUP))
 				RefreshSingle(cc, cl, cs);
 			break;
@@ -1060,9 +956,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			BufferIO::WriteInt32(pbuf, 0);
 			pbuf += 4;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_SWAP: {
@@ -1074,9 +968,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			int s2 = pbuf[14];
 			pbuf += 16;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			RefreshSingle(c1, l1, s1);
 			RefreshSingle(c2, l2, s2);
 			break;
@@ -1084,24 +976,18 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_FIELD_DISABLED: {
 			pbuf += 4;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_SUMMONING: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_SUMMONED: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			RefreshMzone(0);
 			RefreshMzone(1);
 			RefreshSzone(0);
@@ -1111,16 +997,12 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_SPSUMMONING: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_SPSUMMONED: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			RefreshMzone(0);
 			RefreshMzone(1);
 			RefreshSzone(0);
@@ -1131,16 +1013,12 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			RefreshSingle(pbuf[4], pbuf[5], pbuf[6]);
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_FLIPSUMMONED: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			RefreshMzone(0);
 			RefreshMzone(1);
 			RefreshSzone(0);
@@ -1150,17 +1028,13 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_CHAINING: {
 			pbuf += 16;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_CHAINED: {
 			pbuf++;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			RefreshMzone(0);
 			RefreshMzone(1);
 			RefreshSzone(0);
@@ -1172,17 +1046,13 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_CHAIN_SOLVING: {
 			pbuf++;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_CHAIN_SOLVED: {
 			pbuf++;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			RefreshMzone(0);
 			RefreshMzone(1);
 			RefreshSzone(0);
@@ -1193,9 +1063,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		}
 		case MSG_CHAIN_END: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			RefreshMzone(0);
 			RefreshMzone(1);
 			RefreshSzone(0);
@@ -1207,17 +1075,13 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_CHAIN_NEGATED: {
 			pbuf++;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_CHAIN_DISABLED: {
 			pbuf++;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_CARD_SELECTED: {
@@ -1231,18 +1095,14 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count * 4;
 			NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_BECOME_TARGET: {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count * 4;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_DRAW: {
@@ -1251,9 +1111,6 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			pbufw = pbuf;
 			pbuf += count * 4;
 			NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayer(replay_recorder);
-#endif
 			for (int i = 0; i < count; ++i) {
 				if(!(pbufw[3] & 0x80))
 					BufferIO::WriteInt32(pbufw, 0);
@@ -1265,120 +1122,90 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_DAMAGE: {
 			pbuf += 5;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_RECOVER: {
 			pbuf += 5;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_EQUIP: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_LPUPDATE: {
 			pbuf += 5;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_UNEQUIP: {
 			pbuf += 4;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_CARD_TARGET: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_CANCEL_TARGET: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_PAY_LPCOST: {
 			pbuf += 5;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_ADD_COUNTER: {
 			pbuf += 7;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_REMOVE_COUNTER: {
 			pbuf += 7;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_ATTACK: {
 			pbuf += 8;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_BATTLE: {
 			pbuf += 26;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_ATTACK_DISABLED: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_DAMAGE_STEP_START: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			RefreshMzone(0);
 			RefreshMzone(1);
 			break;
 		}
 		case MSG_DAMAGE_STEP_END: {
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			RefreshMzone(0);
 			RefreshMzone(1);
 			break;
@@ -1394,9 +1221,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_TOSS_DICE: {
@@ -1404,9 +1229,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_ROCK_PAPER_SCISSORS: {
@@ -1446,17 +1269,13 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_CARD_HINT: {
 			pbuf += 9;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_PLAYER_HINT: {
 			pbuf += 6;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			break;
 		}
 		case MSG_RELOAD_FIELD: {
@@ -1478,9 +1297,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count * 15;
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			RefreshExtra(0,0xf81fff,0);
 			RefreshExtra(1,0xf81fff,0);
 			RefreshHand(0,0xf81fff,0);
@@ -1502,9 +1319,7 @@ int SpDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			if(match_mode) {
 				match_kill = code;
 				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-#ifdef YGOPRO_SERVER_MODE
-			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 			}
 			break;
 		}
@@ -1705,10 +1520,6 @@ void SpDuel::RefreshMzone(int player, int flag, int use_cache)
 	auto qbuf = query_buffer.data();
 	auto len = WriteUpdateData(player, LOCATION_MZONE, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
-#ifdef YGOPRO_SERVER_MODE
-	if(!dp)
-		NetServer::ReSendToPlayer(replay_recorder);
-#endif //YGOPRO_SERVER_MODE
 	int qlen = 0;
 	while(qlen < len) {
 		const int clen = BufferIO::ReadInt32(qbuf);
@@ -1741,10 +1552,6 @@ void SpDuel::RefreshSzone(int player, int flag, int use_cache)
 	auto qbuf = query_buffer.data();
 	auto len = WriteUpdateData(player, LOCATION_SZONE, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
-#ifdef YGOPRO_SERVER_MODE
-	if(!dp)
-		NetServer::ReSendToPlayer(replay_recorder);
-#endif //YGOPRO_SERVER_MODE
 	int qlen = 0;
 	while(qlen < len) {
 		const int clen = BufferIO::ReadInt32(qbuf);
@@ -1777,10 +1584,6 @@ void SpDuel::RefreshHand(int player, int flag, int use_cache)
 	auto qbuf = query_buffer.data();
 	auto len = WriteUpdateData(player, LOCATION_HAND, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
-#ifdef YGOPRO_SERVER_MODE
-	if(!dp)
-		NetServer::ReSendToPlayer(replay_recorder);
-#endif //YGOPRO_SERVER_MODE
 	int qlen = 0;
 	while(qlen < len) {
 		const int slen = BufferIO::ReadInt32(qbuf);
@@ -1813,10 +1616,6 @@ void SpDuel::RefreshGrave(int player, int flag, int use_cache)
 	auto qbuf = query_buffer.data();
 	auto len = WriteUpdateData(player, LOCATION_GRAVE, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
-#ifdef YGOPRO_SERVER_MODE
-	if(!dp)
-		NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif //YGOPRO_SERVER_MODE
 	// NetServer::ReSendToPlayer(players[1]);
 	// for(auto pit = observers.begin(); pit != observers.end(); ++pit)
 	// 	NetServer::ReSendToPlayer(*pit);
@@ -1834,12 +1633,6 @@ void SpDuel::RefreshExtra(int player, int flag, int use_cache)
 	auto qbuf = query_buffer.data();
 	auto len = WriteUpdateData(player, LOCATION_EXTRA, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
-#ifdef YGOPRO_SERVER_MODE
-	if(!dp)
-		NetServer::ReSendToPlayer(replay_recorder);
-	if(!dp)
-		NetServer::ReSendToPlayer(cache_recorder);
-#endif //YGOPRO_SERVER_MODE
 }
 
 #ifdef YGOPRO_SERVER_MODE
@@ -1849,8 +1642,6 @@ void SpDuel::RefreshRemoved(int player, int flag, int use_cache, DuelPlayer* dp)
 	auto qbuf = query_buffer.data();
 	auto len = WriteUpdateData(player, LOCATION_REMOVED, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
-	if(!dp)
-		NetServer::ReSendToPlayer(replay_recorder);
 	int qlen = 0;
 	while(qlen < len) {
 		int clen = BufferIO::ReadInt32(qbuf);
@@ -1879,12 +1670,6 @@ void SpDuel::RefreshDeck(int player, int flag, int use_cache)
 	auto qbuf = query_buffer.data();
 	auto len = WriteUpdateData(player, LOCATION_DECK, flag, qbuf, use_cache);
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
-#ifdef YGOPRO_SERVER_MODE
-	if(!dp)
-		NetServer::ReSendToPlayer(replay_recorder);
-	if(!dp)
-		NetServer::ReSendToPlayer(cache_recorder);
-#endif //YGOPRO_SERVER_MODE
 }
 
 
@@ -1941,9 +1726,7 @@ void SpDuel::RefreshSingle(int player, int location, int sequence, int flag) {
 		BufferIO::WriteInt32(qbuf, 0);
 		std::memset(qbuf, 0, clen - 12);
 	}
-#ifdef YGOPRO_SERVER_MODE
-	NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
-#endif
+
 	// NetServer::SendBufferToPlayer(players[1 - player], STOC_GAME_MSG, query_buffer, len + 4);
 	// for (auto pit = observers.begin(); pit != observers.end(); ++pit)
 	// 	NetServer::ReSendToPlayer(*pit);
@@ -1966,9 +1749,6 @@ void SpDuel::SingleTimer(evutil_socket_t fd, short events, void* arg) {
 		wbuf[1] = 1 - player;
 		wbuf[2] = 0x3;
 		NetServer::SendBufferToPlayer(sd->players[0], STOC_GAME_MSG, wbuf, 3);
-#ifdef YGOPRO_SERVER_MODE
-		NetServer::ReSendToPlayers(sd->cache_recorder, sd->replay_recorder);
-#endif
 		if(sd->players[player] == sd->pplayer[player]) {
 			sd->match_result[sd->duel_count++] = 1 - player;
 			sd->tp_player = player;
