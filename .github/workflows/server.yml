@@ -138,6 +138,9 @@ jobs:
           - ubuntu-static-link
           - ubuntu-zip-support
         include:
+          - name: ubuntu-18
+            os: ubuntu-18.04
+            premake-version: 5.0.0-beta4
           - name: ubuntu-22
             os: ubuntu-22.04
             premake-version: 5.0.0-beta4
@@ -266,7 +269,7 @@ jobs:
           bin/release/ygopro
 
   publish:
-    needs: [build-windows]
+    needs: [build-windows, build-linux]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
