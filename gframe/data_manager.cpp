@@ -1,5 +1,8 @@
 #include "data_manager.h"
 #include "game.h"
+#include <iostream>
+#include <unordered_map>
+#include <random>
 #if !defined(YGOPRO_SERVER_MODE) || defined(SERVER_ZIP_SUPPORT)
 #include "spmemvfs/spmemvfs.h"
 #endif
@@ -35,6 +38,7 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 		step = sqlite3_step(pStmt);
 		if (step == SQLITE_ROW) {
 			cd.code = sqlite3_column_int(pStmt, 0);
+			_codeset.push_back(cd.code);
 			cd.ot = sqlite3_column_int(pStmt, 1);
 			cd.alias = sqlite3_column_int(pStmt, 2);
 			uint64_t setcode = static_cast<uint64_t>(sqlite3_column_int64(pStmt, 3));
@@ -223,6 +227,37 @@ bool DataManager::GetData(unsigned int code, CardData* pData) const {
 	}
 	return true;
 }
+bool DataManager::GetDatasRandom(std::vector<int>& data,uint32_t count, uint32_t type,bool is_include) {
+	data.clear();
+    std::vector<unsigned int> candidates;
+    candidates.reserve(_codeset.size());
+    for(unsigned int code : _codeset){
+        auto it = _datas.find(code);
+        if(it == _datas.end()) continue;
+        const auto &d = it->second;
+        if(d.type & TYPE_TOKEN) continue; 
+        if(is_include){
+			if(type == 0 || (d.type & type))
+            candidates.push_back(code);
+		}else{
+			if(type == 0 || !(d.type & type))
+            candidates.push_back(code);
+		}
+    }
+    if(candidates.empty()) return {};
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::shuffle(candidates.begin(), candidates.end(), gen);
+    if(count <= 0) return false;
+    if((size_t)count >= candidates.size()) return false;
+
+	data.reserve(count);
+    for (size_t i = 0; i < static_cast<size_t>(count); ++i)
+        data.push_back(static_cast<int>(candidates[i]));
+    return true;
+
+    return true;
+}
 #ifndef YGOPRO_SERVER_MODE
 bool DataManager::GetString(unsigned int code, CardString* pStr) const {
 	auto csit = _strings.find(code);
@@ -410,6 +445,11 @@ std::wstring DataManager::FormatLinkMarker(unsigned int link_marker) const {
 	return buffer;
 }
 #endif //YGOPRO_SERVER_MODE
+uint32_t DataManager::CardReaderRandom(std::vector<int>& data,uint32_t count, uint32_t type ,bool is_include) {
+	if (!dataManager.GetDatasRandom(data,count,type,is_include))
+		data.clear();
+	return 0;
+}
 uint32_t DataManager::CardReader(uint32_t code, card_data* pData) {
 	if (!dataManager.GetData(code, pData))
 		pData->clear();

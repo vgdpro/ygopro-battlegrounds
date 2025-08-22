@@ -1,21 +1,20 @@
-#ifndef SINGLE_DUEL_H
-#define SINGLE_DUEL_H
+#ifndef INDEPENDENT_DUEL_H
+#define INDEPENDENT_DUEL_H
 
 #include <set>
 #include "network.h"
 #include "deck_manager.h"
 #include "replay.h"
-
 namespace ygo {
-class IndependentDuel;
+class SingleDuel;
 }
 
 namespace ygo {
 
-class SingleDuel: public DuelMode {
+class IndependentDuel: public DuelMode {
 public:
-	SingleDuel(bool is_match);
-	~SingleDuel() override;
+	IndependentDuel(bool is_match);
+	~IndependentDuel() override;
 	void Chat(DuelPlayer* dp, unsigned char* pdata, int len) override;
 	void JoinGame(DuelPlayer* dp, unsigned char* pdata, bool is_creater) override;
 	void LeaveGame(DuelPlayer* dp) override;
@@ -46,20 +45,19 @@ public:
 	void RefreshGrave(int player, int flag = 0x81fff, int use_cache = 1, DuelPlayer* dp = 0);
 	void RefreshExtra(int player, int flag = 0xe81fff, int use_cache = 1, DuelPlayer* dp = 0);
 	void RefreshRemoved(int player, int flag = 0x81fff, int use_cache = 1, DuelPlayer* dp = 0);
-	void RefreshDeck(int player, int flag = 0x81fff, int use_cache = 1, DuelPlayer* dp = 0);
-	void RefreshRemove(int player, int flag = 0x81fff, int use_cache = 1, DuelPlayer* dp = 0);
+	void RefreshDeck(int player, int flag = 0xe81fff, int use_cache = 1, DuelPlayer* dp = 0);
+	void RefreshRemove(int player, int flag = 0x681fff, int use_cache = 1, DuelPlayer* dp = 0);
 #else
 	void RefreshMzone(int player, int flag = 0x881fff, int use_cache = 1);
 	void RefreshSzone(int player, int flag = 0x681fff, int use_cache = 1);
 	void RefreshHand(int player, int flag = 0x681fff, int use_cache = 1);
 	void RefreshGrave(int player, int flag = 0x81fff, int use_cache = 1);
 	void RefreshExtra(int player, int flag = 0xe81fff, int use_cache = 1);
-	void RefreshDeck(int player, int flag = 0x81fff, int use_cache = 1);
-	void RefreshRemove(int player, int flag = 0x81fff, int use_cache = 1);
+	void RefreshDeck(int player, int flag = 0xe81fff, int use_cache = 1);
+	void RefreshRemove(int player, int flag = 0x681fff, int use_cache = 1);
 #endif
 	void RefreshSingle(int player, int location, int sequence, int flag = 0xf81fff);
-	void IndependentDuelStopProc(int duelid);
-	void IndependentDuelTimeout(unsigned char last_response, SingleDuel* sd);
+	void SetSingleDuel(SingleDuel* sd, int originplayer);
 
 	static uint32_t MessageHandler(intptr_t fduel, uint32_t type);
 	static void SingleTimer(evutil_socket_t fd, short events, void* arg);
@@ -70,8 +68,8 @@ private:
 protected:
 	DuelPlayer* players[2]{};
 	DuelPlayer* pplayer[2]{};
-	IndependentDuel* independent_duel[2]{};
-	bool onindependent_duel[2]{};
+	SingleDuel* father{};
+	int originplayerid{};
 	bool ready[2]{};
 	Deck pdeck[2];
 	int deck_error[2]{};
