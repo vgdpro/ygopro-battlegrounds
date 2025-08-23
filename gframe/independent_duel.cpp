@@ -60,20 +60,20 @@ void IndependentDuel::HandResult(DuelPlayer* dp, unsigned char res) {
 }
 void IndependentDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	dp->state = CTOS_RESPONSE;
-// 	std::random_device rd;
-// 	ExtendedReplayHeader rh;
-// 	rh.base.id = REPLAY_ID_YRP2;
-// 	rh.base.version = PRO_VERSION;
-// 	rh.base.flag = REPLAY_UNIFORM;
-// 	rh.base.start_time = (uint32_t)std::time(nullptr);
-// #ifdef YGOPRO_SERVER_MODE
-// 	if (pre_seed_specified[duel_count])
-// 		memcpy(rh.seed_sequence, pre_seed[duel_count], SEED_COUNT * sizeof(uint32_t));
-// 	else
-// #endif
-// 	for (auto& x : rh.seed_sequence)
-// 		x = rd();
-// 	mtrandom rnd(rh.seed_sequence, SEED_COUNT);
+	std::random_device rd;
+	ExtendedReplayHeader rh;
+	rh.base.id = REPLAY_ID_YRP2;
+	rh.base.version = PRO_VERSION;
+	rh.base.flag = REPLAY_UNIFORM;
+	rh.base.start_time = (uint32_t)std::time(nullptr);
+#ifdef YGOPRO_SERVER_MODE
+	if (pre_seed_specified[duel_count])
+		memcpy(rh.seed_sequence, pre_seed[duel_count], SEED_COUNT * sizeof(uint32_t));
+	else
+#endif
+	for (auto& x : rh.seed_sequence)
+		x = rd();
+	mtrandom rnd(rh.seed_sequence, SEED_COUNT);
 	// last_replay.BeginRecord();
 	// last_replay.WriteHeader(rh);
 	// last_replay.WriteData(players[0]->name, 40, false);
@@ -88,7 +88,7 @@ void IndependentDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	set_card_reader(DataManager::CardReader);
 	set_card_reader_random(DataManager::CardReaderRandom);
 	set_message_handler(IndependentDuel::MessageHandler);
-	pduel = create_duel_v3(father->pduel);
+	pduel = create_duel_v2(rh.seed_sequence);
 	set_player_info(pduel, 0, father->host_info.start_lp, 0, 0);
 	set_player_info(pduel, 1, father->host_info.start_lp, 0, 0);
 #ifdef YGOPRO_SERVER_MODE
@@ -156,7 +156,6 @@ void IndependentDuel::Process() {
 	unsigned int engFlag = 0;
 	int engLen = 0;
 	int stop = 0;
-	change_lua_duel(pduel);
 	while (!stop) {
 		if (engFlag == PROCESSOR_END)
 			break;

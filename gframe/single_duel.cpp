@@ -664,7 +664,6 @@ void SingleDuel::Process() {
 	unsigned int engFlag = 0;
 	int engLen = 0;
 	int stop = 0;
-	change_lua_duel(pduel);
 	while (!stop) {
 		if (engFlag == PROCESSOR_END)
 			break;
