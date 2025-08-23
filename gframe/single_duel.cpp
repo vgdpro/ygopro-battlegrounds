@@ -664,6 +664,7 @@ void SingleDuel::Process() {
 	unsigned int engFlag = 0;
 	int engLen = 0;
 	int stop = 0;
+	change_lua_duel(pduel);
 	while (!stop) {
 		if (engFlag == PROCESSOR_END)
 			break;
@@ -1209,9 +1210,11 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				BufferIO::WriteInt16(pbuf, 0);
 				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
 				NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
-
-				reload_field_info(independent_duel[0]->pduel);
-				reload_field_info(independent_duel[1]->pduel);
+				if(host_info.time_limit){
+					timeval timeout = { 1, 0 };
+					event_add(independent_duel[0]->etimer, &timeout);
+					event_add(independent_duel[1]->etimer, &timeout);
+				}
 
 				independent_duel[1]->Process();
 				independent_duel[0]->Process();
@@ -2460,7 +2463,8 @@ void SingleDuel::IndependentDuelTimeout(unsigned char last_response, SingleDuel*
 		wbuf[1] = 1 - player;
 		wbuf[2] = 0x3;
 		NetServer::SendBufferToPlayer(sd->players[0], STOC_GAME_MSG, wbuf, 3);
-		NetServer::ReSendToPlayer(sd->players[1]);
+		wbuf[1] = player;
+		NetServer::SendBufferToPlayer(sd->players[1], STOC_GAME_MSG, wbuf, 3);
 		for(auto oit = sd->observers.begin(); oit != sd->observers.end(); ++oit)
 			NetServer::ReSendToPlayer(*oit);
 #ifdef YGOPRO_SERVER_MODE
