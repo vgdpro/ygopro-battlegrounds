@@ -1209,6 +1209,8 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				BufferIO::WriteInt16(pbuf, 0);
 				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
 				NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
+				independent_duel[0]->time_elapsed = 0;
+				independent_duel[1]->time_elapsed = 0;
 				if(host_info.time_limit){
 					timeval timeout = { 1, 0 };
 					event_add(independent_duel[0]->etimer, &timeout);
@@ -2482,6 +2484,45 @@ void SingleDuel::IndependentDuelStopProc(int duelid) {
 	unsigned char msg = MSG_WAITING;
 	NetServer::SendPacketToPlayer(players[duelid], STOC_GAME_MSG, msg);
 	if(!onindependent_duel[0] && !onindependent_duel[1]) {
+		FILE *fp = fopen("error.log", "at");
+		fprintf(fp, "MSG2 %d\n", 123123);
+		fclose(fp);
+
+		end_duel(pduel);
+		event_del(etimer);
+		pduel = 0;
+
+
+		std::random_device rd;
+		ExtendedReplayHeader rh;
+		rh.base.id = REPLAY_ID_YRP2;
+		rh.base.version = PRO_VERSION;
+		rh.base.flag = REPLAY_UNIFORM;
+		rh.base.start_time = (uint32_t)std::time(nullptr);
+#ifdef YGOPRO_SERVER_MODE
+		if (pre_seed_specified[duel_count])
+			memcpy(rh.seed_sequence, pre_seed[duel_count], SEED_COUNT * sizeof(uint32_t));
+		else
+#endif
+		for (auto& x : rh.seed_sequence)
+			x = rd();
+		mtrandom rnd(rh.seed_sequence, SEED_COUNT);
+		time_limit[0] = host_info.time_limit;
+		time_limit[1] = host_info.time_limit;
+		set_script_reader(DataManager::ScriptReaderEx);
+		set_card_reader(DataManager::CardReader);
+		set_card_reader_random(DataManager::CardReaderRandom);
+		set_message_handler(SingleDuel::MessageHandler);
+		pduel = create_duel_v2(rh.seed_sequence);
+
+		FILE *fp2 = fopen("error.log", "at");
+		fprintf(fp2, "MSG2 %d\n", 345345);
+		fclose(fp2);
+		set_player_info(pduel, 0, host_info.start_lp, 0, 0);
+		set_player_info(pduel, 1, host_info.start_lp, 0, 0);
+		unsigned int opt = (unsigned int)host_info.duel_rule << 16;
+		if(host_info.no_shuffle_deck)
+			opt |= DUEL_PSEUDO_SHUFFLE;
 
 		unsigned char startbuf[32]{};
 		auto pbuf = startbuf;
@@ -2490,17 +2531,48 @@ void SingleDuel::IndependentDuelStopProc(int duelid) {
 		BufferIO::WriteInt8(pbuf, host_info.duel_rule);
 		BufferIO::WriteInt32(pbuf, host_info.start_lp);
 		BufferIO::WriteInt32(pbuf, host_info.start_lp);
-		BufferIO::WriteInt16(pbuf, query_field_count(pduel, 0, LOCATION_DECK));
-		BufferIO::WriteInt16(pbuf, query_field_count(pduel, 0, LOCATION_EXTRA));
-		BufferIO::WriteInt16(pbuf, query_field_count(pduel, 1, LOCATION_DECK));
-		BufferIO::WriteInt16(pbuf, query_field_count(pduel, 1, LOCATION_EXTRA));
+		BufferIO::WriteInt16(pbuf, 0);
+		BufferIO::WriteInt16(pbuf, 0);
+		BufferIO::WriteInt16(pbuf, 0);
+		BufferIO::WriteInt16(pbuf, 0);
 		NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
 		startbuf[1] = 1;
 		NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
+		startbuf[1] = 0x10;
+		for(auto oit = observers.begin(); oit != observers.end(); ++oit)
+			NetServer::SendBufferToPlayer(*oit, STOC_GAME_MSG, startbuf, 19);
+#ifdef YGOPRO_SERVER_MODE
+		if(cache_recorder)
+			NetServer::SendBufferToPlayer(cache_recorder, STOC_GAME_MSG, startbuf, 19);
+		if(replay_recorder)
+			NetServer::SendBufferToPlayer(replay_recorder, STOC_GAME_MSG, startbuf, 19);
+		turn_player = 0;
+		phase = 1;
+		deck_reversed = false;
+#endif
+		FILE *fp3 = fopen("error.log", "at");
+		fprintf(fp3, "MSG2 %d\n", 456456);
+		fclose(fp3);
+		start_duel(pduel, opt);
+		if(host_info.time_limit) {
+			time_elapsed = 0;
+#ifdef YGOPRO_SERVER_MODE
+			time_compensator[0] = host_info.time_limit;
+			time_compensator[1] = host_info.time_limit;
+			time_backed[0] = host_info.time_limit;
+			time_backed[1] = host_info.time_limit;
+			last_game_msg = 0;
+#endif
+			timeval timeout = { 1, 0 };
+			event_add(etimer, &timeout);
+		}
+
+		FILE *fp4 = fopen("error.log", "at");
+		fprintf(fp4, "MSG2 %d\n", 56677567);
+		fclose(fp4);
 
 		copy_duel_data(pduel, independent_duel[0]->pduel, independent_duel[1]->pduel, 0xffff);
 		reload_field_info(pduel);
-		time_elapsed = 0;
 		Process();
 	}
 }

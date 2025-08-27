@@ -78,6 +78,7 @@ protected:
 	unsigned char hand_result[2]{};
 	unsigned char last_response{ 0 };
 	std::set<DuelPlayer*> observers;
+	intptr_t ppduel{};
 #ifdef YGOPRO_SERVER_MODE
 	DuelPlayer* cache_recorder{};
 	DuelPlayer* replay_recorder{};

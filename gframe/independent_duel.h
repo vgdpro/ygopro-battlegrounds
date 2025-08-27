@@ -62,6 +62,8 @@ public:
 	static uint32_t MessageHandler(intptr_t fduel, uint32_t type);
 	static void SingleTimer(evutil_socket_t fd, short events, void* arg);
 
+	short time_elapsed{ 0 };
+
 private:
 	int WriteUpdateData(int& player, int location, int& flag, unsigned char*& qbuf, int& use_cache);
 	
@@ -90,7 +92,6 @@ protected:
 	unsigned char tp_player{ 0 };
 	unsigned char match_result[3]{};
 	short time_limit[2]{};
-	short time_elapsed{ 0 };
 #ifdef YGOPRO_SERVER_MODE
 	short time_compensator[2]{};
 	short time_backed[2]{};
