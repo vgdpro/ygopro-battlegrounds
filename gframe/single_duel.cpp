@@ -2484,9 +2484,6 @@ void SingleDuel::IndependentDuelStopProc(int duelid) {
 	unsigned char msg = MSG_WAITING;
 	NetServer::SendPacketToPlayer(players[duelid], STOC_GAME_MSG, msg);
 	if(!onindependent_duel[0] && !onindependent_duel[1]) {
-		FILE *fp = fopen("error.log", "at");
-		fprintf(fp, "MSG2 %d\n", 123123);
-		fclose(fp);
 
 		end_duel(pduel);
 		event_del(etimer);
@@ -2514,10 +2511,6 @@ void SingleDuel::IndependentDuelStopProc(int duelid) {
 		set_card_reader_random(DataManager::CardReaderRandom);
 		set_message_handler(SingleDuel::MessageHandler);
 		pduel = create_duel_v2(rh.seed_sequence);
-
-		FILE *fp2 = fopen("error.log", "at");
-		fprintf(fp2, "MSG2 %d\n", 345345);
-		fclose(fp2);
 		set_player_info(pduel, 0, host_info.start_lp, 0, 0);
 		set_player_info(pduel, 1, host_info.start_lp, 0, 0);
 		unsigned int opt = (unsigned int)host_info.duel_rule << 16;
@@ -2550,9 +2543,6 @@ void SingleDuel::IndependentDuelStopProc(int duelid) {
 		phase = 1;
 		deck_reversed = false;
 #endif
-		FILE *fp3 = fopen("error.log", "at");
-		fprintf(fp3, "MSG2 %d\n", 456456);
-		fclose(fp3);
 		start_duel(pduel, opt);
 		if(host_info.time_limit) {
 			time_elapsed = 0;
@@ -2567,9 +2557,6 @@ void SingleDuel::IndependentDuelStopProc(int duelid) {
 			event_add(etimer, &timeout);
 		}
 
-		FILE *fp4 = fopen("error.log", "at");
-		fprintf(fp4, "MSG2 %d\n", 56677567);
-		fclose(fp4);
 
 		copy_duel_data(pduel, independent_duel[0]->pduel, independent_duel[1]->pduel, 0xffff);
 		reload_field_info(pduel);
