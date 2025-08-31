@@ -1216,6 +1216,8 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 					event_add(independent_duel[0]->etimer, &timeout);
 					event_add(independent_duel[1]->etimer, &timeout);
 				}
+				set_player_lp(pduel,independent_duel[0]->pduel,0);
+				set_player_lp(pduel,independent_duel[1]->pduel,1);
 
 				independent_duel[1]->Process();
 				independent_duel[0]->Process();
