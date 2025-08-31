@@ -2485,37 +2485,37 @@ void SingleDuel::IndependentDuelStopProc(int duelid) {
 	NetServer::SendPacketToPlayer(players[duelid], STOC_GAME_MSG, msg);
 	if(!onindependent_duel[0] && !onindependent_duel[1]) {
 
-		end_duel(pduel);
+		// end_duel(pduel);
 		event_del(etimer);
-		pduel = 0;
+// 		pduel = 0;
 
 
-		std::random_device rd;
-		ExtendedReplayHeader rh;
-		rh.base.id = REPLAY_ID_YRP2;
-		rh.base.version = PRO_VERSION;
-		rh.base.flag = REPLAY_UNIFORM;
-		rh.base.start_time = (uint32_t)std::time(nullptr);
-#ifdef YGOPRO_SERVER_MODE
-		if (pre_seed_specified[duel_count])
-			memcpy(rh.seed_sequence, pre_seed[duel_count], SEED_COUNT * sizeof(uint32_t));
-		else
-#endif
-		for (auto& x : rh.seed_sequence)
-			x = rd();
-		mtrandom rnd(rh.seed_sequence, SEED_COUNT);
+// 		std::random_device rd;
+// 		ExtendedReplayHeader rh;
+// 		rh.base.id = REPLAY_ID_YRP2;
+// 		rh.base.version = PRO_VERSION;
+// 		rh.base.flag = REPLAY_UNIFORM;
+// 		rh.base.start_time = (uint32_t)std::time(nullptr);
+// #ifdef YGOPRO_SERVER_MODE
+// 		if (pre_seed_specified[duel_count])
+// 			memcpy(rh.seed_sequence, pre_seed[duel_count], SEED_COUNT * sizeof(uint32_t));
+// 		else
+// #endif
+// 		for (auto& x : rh.seed_sequence)
+// 			x = rd();
+// 		mtrandom rnd(rh.seed_sequence, SEED_COUNT);
 		time_limit[0] = host_info.time_limit;
 		time_limit[1] = host_info.time_limit;
-		set_script_reader(DataManager::ScriptReaderEx);
-		set_card_reader(DataManager::CardReader);
-		set_card_reader_random(DataManager::CardReaderRandom);
-		set_message_handler(SingleDuel::MessageHandler);
-		pduel = create_duel_v2(rh.seed_sequence);
-		set_player_info(pduel, 0, host_info.start_lp, 0, 0);
-		set_player_info(pduel, 1, host_info.start_lp, 0, 0);
-		unsigned int opt = (unsigned int)host_info.duel_rule << 16;
-		if(host_info.no_shuffle_deck)
-			opt |= DUEL_PSEUDO_SHUFFLE;
+// 		set_script_reader(DataManager::ScriptReaderEx);
+// 		set_card_reader(DataManager::CardReader);
+// 		set_card_reader_random(DataManager::CardReaderRandom);
+// 		set_message_handler(SingleDuel::MessageHandler);
+// 		pduel = create_duel_v3();
+// 		set_player_info(pduel, 0, host_info.start_lp, 0, 0);
+// 		set_player_info(pduel, 1, host_info.start_lp, 0, 0);
+// 		unsigned int opt = (unsigned int)host_info.duel_rule << 16;
+// 		if(host_info.no_shuffle_deck)
+// 			opt |= DUEL_PSEUDO_SHUFFLE;
 
 		unsigned char startbuf[32]{};
 		auto pbuf = startbuf;
@@ -2531,19 +2531,19 @@ void SingleDuel::IndependentDuelStopProc(int duelid) {
 		NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
 		startbuf[1] = 1;
 		NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
-		startbuf[1] = 0x10;
-		for(auto oit = observers.begin(); oit != observers.end(); ++oit)
-			NetServer::SendBufferToPlayer(*oit, STOC_GAME_MSG, startbuf, 19);
-#ifdef YGOPRO_SERVER_MODE
-		if(cache_recorder)
-			NetServer::SendBufferToPlayer(cache_recorder, STOC_GAME_MSG, startbuf, 19);
-		if(replay_recorder)
-			NetServer::SendBufferToPlayer(replay_recorder, STOC_GAME_MSG, startbuf, 19);
-		turn_player = 0;
-		phase = 1;
-		deck_reversed = false;
-#endif
-		start_duel(pduel, opt);
+// 		startbuf[1] = 0x10;
+// 		for(auto oit = observers.begin(); oit != observers.end(); ++oit)
+// 			NetServer::SendBufferToPlayer(*oit, STOC_GAME_MSG, startbuf, 19);
+// #ifdef YGOPRO_SERVER_MODE
+// 		if(cache_recorder)
+// 			NetServer::SendBufferToPlayer(cache_recorder, STOC_GAME_MSG, startbuf, 19);
+// 		if(replay_recorder)
+// 			NetServer::SendBufferToPlayer(replay_recorder, STOC_GAME_MSG, startbuf, 19);
+// 		turn_player = 0;
+// 		phase = 1;
+// 		deck_reversed = false;
+// #endif
+// 		start_duel(pduel, opt);
 		if(host_info.time_limit) {
 			time_elapsed = 0;
 #ifdef YGOPRO_SERVER_MODE

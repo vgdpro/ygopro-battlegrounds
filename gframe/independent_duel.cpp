@@ -88,7 +88,7 @@ void IndependentDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	set_card_reader(DataManager::CardReader);
 	set_card_reader_random(DataManager::CardReaderRandom);
 	set_message_handler(IndependentDuel::MessageHandler);
-	pduel = create_duel_v2(rh.seed_sequence);
+	pduel = create_duel_v3();
 	set_player_info(pduel, 0, father->host_info.start_lp, 0, 0);
 	set_player_info(pduel, 1, father->host_info.start_lp, 0, 0);
 #ifdef YGOPRO_SERVER_MODE
@@ -156,6 +156,7 @@ void IndependentDuel::Process() {
 	unsigned int engFlag = 0;
 	int engLen = 0;
 	int stop = 0;
+	change_lua_duel(pduel);
 	while (!stop) {
 		if (engFlag == PROCESSOR_END)
 			break;
