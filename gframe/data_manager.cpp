@@ -55,6 +55,9 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 					cd.set_setcode(setcode);
 			}
 			cd.type = static_cast<decltype(cd.type)>(sqlite3_column_int64(pStmt, 4));
+			if(cd.type == TYPE_SPELL){
+				cd.type |= TYPE_QUICKPLAY;
+			}
 			cd.attack = sqlite3_column_int(pStmt, 5);
 			cd.defense = sqlite3_column_int(pStmt, 6);
 			if (cd.type & TYPE_LINK) {
