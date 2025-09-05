@@ -627,18 +627,18 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	RefreshExtra(0);
 	RefreshExtra(1);
 	start_duel(pduel, opt);
-	if(host_info.time_limit) {
-		time_elapsed = 0;
-#ifdef YGOPRO_SERVER_MODE
-		time_compensator[0] = host_info.time_limit;
-		time_compensator[1] = host_info.time_limit;
-		time_backed[0] = host_info.time_limit;
-		time_backed[1] = host_info.time_limit;
-		last_game_msg = 0;
-#endif
-		timeval timeout = { 1, 0 };
-		event_add(etimer, &timeout);
-	}
+// 	if(host_info.time_limit) {
+// 		time_elapsed = 0;
+// #ifdef YGOPRO_SERVER_MODE
+// 		time_compensator[0] = host_info.time_limit;
+// 		time_compensator[1] = host_info.time_limit;
+// 		time_backed[0] = host_info.time_limit;
+// 		time_backed[1] = host_info.time_limit;
+// 		last_game_msg = 0;
+// #endif
+// 		timeval timeout = { 1, 0 };
+// 		event_add(etimer, &timeout);
+// 	}
 
 	independent_duel[0] = new IndependentDuel(false);
 	independent_duel[0]->etimer = event_new(NetServer::net_evbase, 0, EV_TIMEOUT | EV_PERSIST, IndependentDuel::SingleTimer, independent_duel[0]);
