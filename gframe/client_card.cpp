@@ -143,9 +143,6 @@ void ClientCard::UpdateInfo(unsigned char* buf) {
 		}
 	}
 	if(flag & QUERY_COUNTERS) {
-		FILE *fp = fopen("error.log", "at");
-		fprintf(fp, "MSG2 %d\n", 6666666);
-		fclose(fp);
 		int count = BufferIO::ReadInt32(buf);
 		for(int i = 0; i < count; ++i) {
 			int ctype = BufferIO::ReadInt16(buf);

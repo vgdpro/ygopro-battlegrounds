@@ -777,6 +777,9 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 #ifdef YGOPRO_SERVER_MODE
 		last_game_msg = engType;
 #endif
+		// FILE *fp = fopen("error.log", "at");
+		// fprintf(fp, "MSGserver %d\n", engType);
+		// fclose(fp);
 		switch (engType) {
 		case MSG_RETRY: {
 			WaitforResponse(last_response);

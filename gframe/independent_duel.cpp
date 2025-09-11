@@ -187,7 +187,7 @@ int IndependentDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		offset = pbuf;
 		unsigned char engType = BufferIO::ReadUInt8(pbuf);
 		// FILE *fp = fopen("error.log", "at");
-		// fprintf(fp, "MSG2 %d\n", engType);
+		// fprintf(fp, "MSGserver %d\n", engType);
 		// fclose(fp);
 #ifdef YGOPRO_SERVER_MODE
 		last_game_msg = engType;

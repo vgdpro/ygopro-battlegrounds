@@ -982,6 +982,9 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 		mainGame->gMutex.unlock();
 		is_swapping = false;
 	}
+	// FILE *fp = fopen("error.log", "at");
+	// fprintf(fp, "MSGlocal %d\n", mainGame->dInfo.curMsg);
+	// fclose(fp);
 	switch(mainGame->dInfo.curMsg) {
 	case MSG_RETRY: {
 		if(last_successful_msg_length) {
