@@ -627,9 +627,9 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	RefreshExtra(0);
 	RefreshExtra(1);
 	start_duel(pduel, opt);
-	FILE *fp1 = fopen("error.log", "at");
-	fprintf(fp1, "start record\n");
-	fclose(fp1);
+	// FILE *fp1 = fopen("error.log", "at");
+	// fprintf(fp1, "start record\n");
+	// fclose(fp1);
 // 	if(host_info.time_limit) {
 // 		time_elapsed = 0;
 // #ifdef YGOPRO_SERVER_MODE
