@@ -186,9 +186,6 @@ int IndependentDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 	while (pbuf - msgbuffer < (int)len) {
 		offset = pbuf;
 		unsigned char engType = BufferIO::ReadUInt8(pbuf);
-		// FILE *fp = fopen("error.log", "at");
-		// fprintf(fp, "MSGserver %d\n", engType);
-		// fclose(fp);
 #ifdef YGOPRO_SERVER_MODE
 		last_game_msg = engType;
 #endif
@@ -1133,17 +1130,17 @@ void IndependentDuel::RefreshMzone(int player, int flag, int use_cache)
 if(!dp || dp == players[0])
 #endif
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
-	int qlen = 0;
-	while(qlen < len) {
-		const int clen = BufferIO::ReadInt32(qbuf);
-		qlen += clen;
-		if (clen <= LEN_HEADER)
-			continue;
-		auto position = GetPosition(qbuf, 8);
-		if (position & POS_FACEDOWN)
-			std::memset(qbuf, 0, clen - 4);
-		qbuf += clen - 4;
-	}
+	// int qlen = 0;
+	// while(qlen < len) {
+	// 	const int clen = BufferIO::ReadInt32(qbuf);
+	// 	qlen += clen;
+	// 	if (clen <= LEN_HEADER)
+	// 		continue;
+	// 	auto position = GetPosition(qbuf, 8);
+	// 	if (position & POS_FACEDOWN)
+	// 		std::memset(qbuf, 0, clen - 4);
+	// 	qbuf += clen - 4;
+	// }
 }
 
 
@@ -1162,17 +1159,17 @@ if(!dp || dp == players[0])
 #endif
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
 
-	int qlen = 0;
-	while(qlen < len) {
-		const int clen = BufferIO::ReadInt32(qbuf);
-		qlen += clen;
-		if (clen <= LEN_HEADER)
-			continue;
-		auto position = GetPosition(qbuf, 8);
-		if (position & POS_FACEDOWN)
-			std::memset(qbuf, 0, clen - 4);
-		qbuf += clen - 4;
-	}
+	// int qlen = 0;
+	// while(qlen < len) {
+	// 	const int clen = BufferIO::ReadInt32(qbuf);
+	// 	qlen += clen;
+	// 	if (clen <= LEN_HEADER)
+	// 		continue;
+	// 	auto position = GetPosition(qbuf, 8);
+	// 	if (position & POS_FACEDOWN)
+	// 		std::memset(qbuf, 0, clen - 4);
+	// 	qbuf += clen - 4;
+	// }
 }
 
 
@@ -1191,17 +1188,17 @@ if(!dp || dp == players[0])
 #endif
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
 
-	int qlen = 0;
-	while(qlen < len) {
-		const int slen = BufferIO::ReadInt32(qbuf);
-		qlen += slen;
-		if (slen <= LEN_HEADER)
-			continue;
-		auto position = GetPosition(qbuf, 8);
-		if(!(position & POS_FACEUP))
-			std::memset(qbuf, 0, slen - 4);
-		qbuf += slen - 4;
-	}
+	// int qlen = 0;
+	// while(qlen < len) {
+	// 	const int slen = BufferIO::ReadInt32(qbuf);
+	// 	qlen += slen;
+	// 	if (slen <= LEN_HEADER)
+	// 		continue;
+	// 	auto position = GetPosition(qbuf, 8);
+	// 	if(!(position & POS_FACEUP))
+	// 		std::memset(qbuf, 0, slen - 4);
+	// 	qbuf += slen - 4;
+	// }
 
 }
 
@@ -1247,17 +1244,17 @@ void IndependentDuel::RefreshRemoved(int player, int flag, int use_cache, DuelPl
 	auto len = WriteUpdateData(player, LOCATION_REMOVED, flag, qbuf, use_cache);
 	if(!dp || dp == players[0])
 		NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer.data(), len + 3);
-	int qlen = 0;
-	while(qlen < len) {
-		int clen = BufferIO::ReadInt32(qbuf);
-		qlen += clen;
-		if (clen <= LEN_HEADER)
-			continue;
-		auto position = GetPosition(qbuf, 8);
-		if (position & POS_FACEDOWN)
-			memset(qbuf, 0, clen - 4);
-		qbuf += clen - 4;
-	}
+	// int qlen = 0;
+	// while(qlen < len) {
+	// 	int clen = BufferIO::ReadInt32(qbuf);
+	// 	qlen += clen;
+	// 	if (clen <= LEN_HEADER)
+	// 		continue;
+	// 	auto position = GetPosition(qbuf, 8);
+	// 	if (position & POS_FACEDOWN)
+	// 		memset(qbuf, 0, clen - 4);
+	// 	qbuf += clen - 4;
+	// }
 }
 #endif
 
@@ -1303,15 +1300,15 @@ void IndependentDuel::RefreshSingle(int player, int location, int sequence, int 
 	BufferIO::WriteInt8(qbuf, sequence);
 	int len = query_card(pduel, player, location, sequence, flag, qbuf, 0);
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, query_buffer, len + 4);
-	if (len <= LEN_HEADER)
-		return;
-	const int clen = BufferIO::ReadInt32(qbuf);
-	auto position = GetPosition(qbuf, 8);
-	if (position & POS_FACEDOWN) {
-		BufferIO::WriteInt32(qbuf, QUERY_CODE);
-		BufferIO::WriteInt32(qbuf, 0);
-		std::memset(qbuf, 0, clen - 12);
-	}
+	// if (len <= LEN_HEADER)
+	// 	return;
+	// const int clen = BufferIO::ReadInt32(qbuf);
+	// auto position = GetPosition(qbuf, 8);
+	// if (position & POS_FACEDOWN) {
+	// 	BufferIO::WriteInt32(qbuf, QUERY_CODE);
+	// 	BufferIO::WriteInt32(qbuf, 0);
+	// 	std::memset(qbuf, 0, clen - 12);
+	// }
 }
 uint32_t IndependentDuel::MessageHandler(intptr_t fduel, uint32_t type) {
 	if(!enable_log)

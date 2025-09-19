@@ -627,9 +627,6 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	RefreshExtra(0);
 	RefreshExtra(1);
 	start_duel(pduel, opt);
-	// FILE *fp1 = fopen("error.log", "at");
-	// fprintf(fp1, "start record\n");
-	// fclose(fp1);
 // 	if(host_info.time_limit) {
 // 		time_elapsed = 0;
 // #ifdef YGOPRO_SERVER_MODE
@@ -777,9 +774,6 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 #ifdef YGOPRO_SERVER_MODE
 		last_game_msg = engType;
 #endif
-		// FILE *fp = fopen("error.log", "at");
-		// fprintf(fp, "MSGserver %d\n", engType);
-		// fclose(fp);
 		switch (engType) {
 		case MSG_RETRY: {
 			WaitforResponse(last_response);
@@ -1224,6 +1218,8 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				}
 				set_player_lp(pduel,independent_duel[0]->pduel,0);
 				set_player_lp(pduel,independent_duel[1]->pduel,1);
+
+				clean_duel_data(pduel);
 
 				independent_duel[1]->Process();
 				independent_duel[0]->Process();
