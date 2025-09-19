@@ -1219,8 +1219,6 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				set_player_lp(pduel,independent_duel[0]->pduel,0);
 				set_player_lp(pduel,independent_duel[1]->pduel,1);
 
-				clean_duel_data(pduel);
-
 				independent_duel[1]->Process();
 				independent_duel[0]->Process();
 				return 1;
