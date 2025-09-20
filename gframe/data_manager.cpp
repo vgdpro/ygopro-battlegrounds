@@ -3,6 +3,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <random>
+#include <fstream>
 #if !defined(YGOPRO_SERVER_MODE) || defined(SERVER_ZIP_SUPPORT)
 #include "spmemvfs/spmemvfs.h"
 #endif
@@ -32,12 +33,23 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 	wchar_t strBuffer[4096];
 #endif
 	int step = 0;
+	FILE *fp = fopen("banlist.txt", "at");
+	fclose(fp);
+	std::unordered_set<unsigned int> banlist;
+	std::ifstream banlistfile("banlist.txt");
+	unsigned int code;
+	while (banlistfile >> code)
+	{
+		banlist.insert(code);
+	}
 	do {
 		CardDataC cd;
 		CardString cs;
 		step = sqlite3_step(pStmt);
 		if (step == SQLITE_ROW) {
 			cd.code = sqlite3_column_int(pStmt, 0);
+			if (banlist.find(cd.code) != banlist.end())
+				continue;
 			_codeset.push_back(cd.code);
 			cd.ot = sqlite3_column_int(pStmt, 1);
 			cd.alias = sqlite3_column_int(pStmt, 2);

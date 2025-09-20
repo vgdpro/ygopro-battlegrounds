@@ -747,7 +747,10 @@ void SingleDuel::Surrender(DuelPlayer* dp) {
 	wbuf[1] = 1 - player;
 	wbuf[2] = 0;
 	NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, wbuf, 3);
-	NetServer::ReSendToPlayer(players[1]);
+	if(onindependent_duel[0] || onindependent_duel[1]){
+		wbuf[1] = player;
+	}
+	NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, wbuf, 3);
 	for(auto oit = observers.begin(); oit != observers.end(); ++oit)
 		NetServer::ReSendToPlayer(*oit);
 #ifdef YGOPRO_SERVER_MODE
@@ -1910,8 +1913,6 @@ void SingleDuel::EndDuel() {
 	for(auto oit = observers.begin(); oit != observers.end(); ++oit)
 		NetServer::ReSendToPlayer(*oit);
 #endif //YGOPRO_SERVER_MODE
-	independent_duel[0]->EndDuel();
-	independent_duel[1]->EndDuel();
 	end_duel(pduel);
 	event_del(etimer);
 	pduel = 0;
@@ -2463,10 +2464,10 @@ void SingleDuel::IndependentDuelTimeout(unsigned char last_response, SingleDuel*
 	unsigned char wbuf[3];
 		uint32_t player = last_response;
 		wbuf[0] = MSG_WIN;
-		wbuf[1] = 1 - player;
+		wbuf[1] = player;
 		wbuf[2] = 0x3;
 		NetServer::SendBufferToPlayer(sd->players[0], STOC_GAME_MSG, wbuf, 3);
-		wbuf[1] = player;
+		wbuf[1] = 1 - player;
 		NetServer::SendBufferToPlayer(sd->players[1], STOC_GAME_MSG, wbuf, 3);
 		for(auto oit = sd->observers.begin(); oit != sd->observers.end(); ++oit)
 			NetServer::ReSendToPlayer(*oit);

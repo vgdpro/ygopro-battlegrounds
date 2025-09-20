@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
 		int mode = atoi(argv[4]);
 		if(mode > 2)
 			mode = 0;
-		ygo::game_info.mode = mode;
+		ygo::game_info.mode = 0;
 		if(argv[5][0] == 'T')
 			ygo::game_info.duel_rule = DEFAULT_DUEL_RULE - 1;
 		else if(argv[5][0] == 'F')
