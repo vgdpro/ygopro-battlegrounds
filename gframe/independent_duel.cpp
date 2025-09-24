@@ -429,6 +429,7 @@ int IndependentDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_SHUFFLE_DECK: {
 			player = BufferIO::ReadUInt8(pbuf);
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+			RefreshDeck(player);
 			break;
 		}
 		case MSG_SHUFFLE_HAND: {
