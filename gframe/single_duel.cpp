@@ -1212,13 +1212,12 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				BufferIO::WriteInt16(pbuf, 0);
 				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
 				NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
-				independent_duel[0]->time_elapsed = 0;
-				independent_duel[1]->time_elapsed = 0;
+				event_del(etimer);
 				if(host_info.time_limit){
 					independent_duel[0]->UpdateTimmer();
 					independent_duel[1]->UpdateTimmer();
 				}
-				set_player_lp(pduel,independent_duel[0]->pduel,independent_duel[1]->pduel);
+				set_player_state(pduel,independent_duel[0]->pduel,independent_duel[1]->pduel);
 
 				independent_duel[1]->Process();
 				independent_duel[0]->Process();
