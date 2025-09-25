@@ -58,6 +58,7 @@ public:
 #endif
 	void RefreshSingle(int player, int location, int sequence, int flag = 0xf81fff);
 	void SetSingleDuel(SingleDuel* sd, int originplayer);
+	void UpdateTimmer();
 
 	static uint32_t MessageHandler(intptr_t fduel, uint32_t type);
 	static void SingleTimer(evutil_socket_t fd, short events, void* arg);

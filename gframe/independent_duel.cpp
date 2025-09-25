@@ -150,6 +150,19 @@ void IndependentDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	}
 	Process();
 }
+void IndependentDuel::UpdateTimmer() {
+	if(father->host_info.time_limit) {
+		time_elapsed = 0;
+#ifdef YGOPRO_SERVER_MODE
+		time_compensator[0] = father->host_info.time_limit;
+		time_compensator[1] = father->host_info.time_limit;
+		time_backed[0] = father->host_info.time_limit;
+		time_backed[1] = father->host_info.time_limit;
+#endif
+		timeval timeout = { 1, 0 };
+		event_add(etimer, &timeout);
+	}
+}
 void IndependentDuel::Process() {
 	std::vector<unsigned char> engineBuffer;
 	engineBuffer.reserve(SIZE_MESSAGE_BUFFER);
@@ -429,7 +442,6 @@ int IndependentDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_SHUFFLE_DECK: {
 			player = BufferIO::ReadUInt8(pbuf);
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-			RefreshDeck(player);
 			break;
 		}
 		case MSG_SHUFFLE_HAND: {
@@ -518,8 +530,8 @@ int IndependentDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_NEW_PHASE: {
 			int phase = BufferIO::ReadInt16(pbuf);
 			if(phase == PHASE_BATTLE_START){
-				father->IndependentDuelStopProc(originplayerid);
 				event_del(etimer);
+				father->IndependentDuelStopProc(originplayerid);
 				return 1;
 			}
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);

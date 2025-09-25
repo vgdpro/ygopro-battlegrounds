@@ -1060,7 +1060,6 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 #ifdef YGOPRO_SERVER_MODE
 			NetServer::ReSendToPlayers(cache_recorder, replay_recorder);
 #endif
-			RefreshDeck(player);
 			break;
 		}
 		case MSG_SHUFFLE_HAND: {
@@ -1216,9 +1215,8 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				independent_duel[0]->time_elapsed = 0;
 				independent_duel[1]->time_elapsed = 0;
 				if(host_info.time_limit){
-					timeval timeout = { 1, 0 };
-					event_add(independent_duel[0]->etimer, &timeout);
-					event_add(independent_duel[1]->etimer, &timeout);
+					independent_duel[0]->UpdateTimmer();
+					independent_duel[1]->UpdateTimmer();
 				}
 				set_player_lp(pduel,independent_duel[0]->pduel,independent_duel[1]->pduel);
 
