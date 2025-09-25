@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
 		int mode = atoi(argv[4]);
 		if(mode > 2)
 			mode = 0;
-		ygo::game_info.mode = 0;
+		ygo::game_info.mode = mode == 1 ? 0 : mode;
 		if(argv[5][0] == 'T')
 			ygo::game_info.duel_rule = DEFAULT_DUEL_RULE - 1;
 		else if(argv[5][0] == 'F')
@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
 			ygo::game_info.no_shuffle_deck = true;
 		else
 			ygo::game_info.no_shuffle_deck = false;
-		ygo::game_info.start_lp = atoi(argv[8]);
+		ygo::game_info.start_lp = mode == 2 ? atoi(argv[8])/2 : atoi(argv[8]);
 		ygo::game_info.start_hand = atoi(argv[9]);
 		ygo::game_info.draw_count = atoi(argv[10]);
 		ygo::game_info.time_limit = atoi(argv[11]);

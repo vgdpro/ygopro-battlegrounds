@@ -1,42 +1,29 @@
-#ifndef INDEPENDENT_DUEL_H
-#define INDEPENDENT_DUEL_H
+#ifndef TAG_SINGLE_DUEL_H
+#define TAG_SINGLE_DUEL_H
 
 #include <set>
 #include "network.h"
 #include "deck_manager.h"
 #include "replay.h"
-namespace ygo {
-class SingleDuel;
-}
 
 namespace ygo {
 
-class IndependentDuel: public DuelMode {
+class TagSingleDuel{
 public:
-	IndependentDuel(bool is_match);
-	~IndependentDuel() override;
-	void Chat(DuelPlayer* dp, unsigned char* pdata, int len) override;
-	void JoinGame(DuelPlayer* dp, unsigned char* pdata, bool is_creater) override;
-	void LeaveGame(DuelPlayer* dp) override;
-	void ToDuelist(DuelPlayer* dp) override;
-	void ToObserver(DuelPlayer* dp) override;
-	void PlayerReady(DuelPlayer* dp, bool ready) override;
-	void PlayerKick(DuelPlayer* dp, unsigned char pos) override;
-	void UpdateDeck(DuelPlayer* dp, unsigned char* pdata, int len) override;
-	void StartDuel(DuelPlayer* dp) override;
-	void HandResult(DuelPlayer* dp, unsigned char res) override;
-	void TPResult(DuelPlayer* dp, unsigned char tp) override;
-	void Process() override;
-	void Surrender(DuelPlayer* dp) override;
-	int Analyze(unsigned char* msgbuffer, unsigned int len) override;
-	void GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len) override;
-	void TimeConfirm(DuelPlayer* dp) override;
-	void IndependentDuelStopProc(int duelid) override;
-	void IndependentDuelTimeout(unsigned char last_response) override;
-#ifdef YGOPRO_SERVER_MODE
-	void RequestField(DuelPlayer* dp) override;
-#endif
-	void EndDuel() override;
+	TagSingleDuel(bool is_match);
+	~TagSingleDuel();
+	void JoinGame(DuelPlayer* dp, unsigned char* pdata, bool is_creater);
+	void TPResult(DuelPlayer* dp, unsigned char tp);
+	void Process();
+	int Analyze(unsigned char* msgbuffer, unsigned int len);
+	void GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len);
+	void TimeConfirm(DuelPlayer* dp);
+	void TagSingleDuelStopProc(int duelid);
+	void TagSingleDuelTimeout(unsigned char last_response);
+	void EndDuel();
+    #ifdef YGOPRO_SERVER_MODE
+        void RequestField(DuelPlayer* dp);
+    #endif
 	
 	void DuelEndProc();
 	void WaitforResponse(int playerid);
@@ -66,6 +53,13 @@ public:
 	static void SingleTimer(evutil_socket_t fd, short events, void* arg);
 
 	short time_elapsed{ 0 };
+    event* etimer { nullptr };
+	DuelPlayer* host_player{ nullptr };
+	HostInfo host_info;
+	int duel_stage{};
+	intptr_t pduel{};
+	wchar_t name[20]{};
+	wchar_t pass[20]{};
 
 private:
 	int WriteUpdateData(int& player, int location, int& flag, unsigned char*& qbuf, int& use_cache);
@@ -74,7 +68,6 @@ protected:
 	DuelPlayer* players[2]{};
 	DuelPlayer* pplayer[2]{};
 	DuelMode* father{};
-	int originplayerid{};
 	bool ready[2]{};
 	Deck pdeck[2];
 	int deck_error[2]{};

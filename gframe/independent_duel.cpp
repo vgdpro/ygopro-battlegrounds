@@ -28,7 +28,7 @@ void IndependentDuel::JoinGame(DuelPlayer* dp, unsigned char* pdata, bool is_cre
 		}
 	} 
 }
-void IndependentDuel::SetSingleDuel(SingleDuel* sd, int originplayer){
+void IndependentDuel::SetFatherDuel(DuelMode* sd, int originplayer){
 	father = sd;
 	this->originplayerid = originplayer;
 }
@@ -84,11 +84,14 @@ void IndependentDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	// }
 	time_limit[0] = father->host_info.time_limit;
 	time_limit[1] = father->host_info.time_limit;
+	if(father->host_info.time_limit){
+		host_info.time_limit = father->host_info.time_limit;
+	}
 	set_script_reader(DataManager::ScriptReaderEx);
 	set_card_reader(DataManager::CardReader);
 	set_card_reader_random(DataManager::CardReaderRandom);
 	set_message_handler(IndependentDuel::MessageHandler);
-	pduel = create_duel_v3();
+	pduel = create_duel_v2(rh.seed_sequence);
 	set_player_info(pduel, 0, father->host_info.start_lp, 0, 0);
 	set_player_info(pduel, 1, father->host_info.start_lp, 0, 0);
 #ifdef YGOPRO_SERVER_MODE
@@ -136,13 +139,13 @@ void IndependentDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	RefreshExtra(0);
 	RefreshExtra(1);
 	start_duel(pduel, opt);
-	if(father->host_info.time_limit) {
+	if(host_info.time_limit) {
 		time_elapsed = 0;
 #ifdef YGOPRO_SERVER_MODE
-		time_compensator[0] = father->host_info.time_limit;
-		time_compensator[1] = father->host_info.time_limit;
-		time_backed[0] = father->host_info.time_limit;
-		time_backed[1] = father->host_info.time_limit;
+		time_compensator[0] = host_info.time_limit;
+		time_compensator[1] = host_info.time_limit;
+		time_backed[0] = host_info.time_limit;
+		time_backed[1] = host_info.time_limit;
 		last_game_msg = 0;
 #endif
 		timeval timeout = { 1, 0 };
@@ -151,13 +154,18 @@ void IndependentDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	Process();
 }
 void IndependentDuel::UpdateTimmer() {
-	if(father->host_info.time_limit) {
+	if(host_info.time_limit) {
+		if(host_info.time_limit && host_info.time_limit - father->host_info.time_limit < 120){
+			host_info.time_limit += 60;
+			time_limit[0] = host_info.time_limit;
+			time_limit[1] = host_info.time_limit;
+		}
 		time_elapsed = 0;
 #ifdef YGOPRO_SERVER_MODE
-		time_compensator[0] = father->host_info.time_limit;
-		time_compensator[1] = father->host_info.time_limit;
-		time_backed[0] = father->host_info.time_limit;
-		time_backed[1] = father->host_info.time_limit;
+		time_compensator[0] = host_info.time_limit;
+		time_compensator[1] = host_info.time_limit;
+		time_backed[0] = host_info.time_limit;
+		time_backed[1] = host_info.time_limit;
 #endif
 		timeval timeout = { 1, 0 };
 		event_add(etimer, &timeout);
@@ -516,13 +524,13 @@ int IndependentDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 #else
 			pbuf++;
 #endif
-			time_limit[0] = father->host_info.time_limit;
-			time_limit[1] = father->host_info.time_limit;
+			time_limit[0] = host_info.time_limit;
+			time_limit[1] = host_info.time_limit;
 #ifdef YGOPRO_SERVER_MODE
-			time_compensator[0] = father->host_info.time_limit;
-			time_compensator[1] = father->host_info.time_limit;
-			time_backed[0] = father->host_info.time_limit;
-			time_backed[1] = father->host_info.time_limit;
+			time_compensator[0] = host_info.time_limit;
+			time_compensator[1] = host_info.time_limit;
+			time_backed[0] = host_info.time_limit;
+			time_backed[1] = host_info.time_limit;
 #endif
 			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
 			break;
@@ -955,13 +963,13 @@ void IndependentDuel::GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned
 	last_replay.WriteData(resb, len);
 	set_responseb(pduel, resb);
 	players[0]->state = 0xff;
-	if(father->host_info.time_limit) {
+	if(host_info.time_limit) {
 		if(time_limit[0] >= time_elapsed)
 			time_limit[0] -= time_elapsed;
 		else time_limit[0] = 0;
 		time_elapsed = 0;
 #ifdef YGOPRO_SERVER_MODE
-		if(time_backed[0] > 0 && time_limit[0] < father->host_info.time_limit && NetServer::IsCanIncreaseTime(last_game_msg, pdata, len)) {
+		if(time_backed[0] > 0 && time_limit[0] < host_info.time_limit && NetServer::IsCanIncreaseTime(last_game_msg, pdata, len)) {
 			++time_limit[0];
 			++time_compensator[0];
 			--time_backed[0];
@@ -979,7 +987,7 @@ void IndependentDuel::WaitforResponse(int playerid) {
 	last_response = playerid;
 	// unsigned char msg = MSG_WAITING;
 	// NetServer::SendPacketToPlayer(players[1 - playerid], STOC_GAME_MSG, msg);
-	if(father->host_info.time_limit) {
+	if(host_info.time_limit) {
 		STOC_TimeLimit sctl;
 		sctl.player = 0;
 		sctl.left_time = time_limit[playerid];
@@ -1100,7 +1108,7 @@ void IndependentDuel::RequestField(DuelPlayer* dp) {
 }
 #endif //YGOPRO_SERVER_MODE
 void IndependentDuel::TimeConfirm(DuelPlayer* dp) {
-	if(father->host_info.time_limit == 0)
+	if(host_info.time_limit == 0)
 		return;
 	if(0 != last_response)
 		return;
@@ -1331,18 +1339,23 @@ uint32_t IndependentDuel::MessageHandler(intptr_t fduel, uint32_t type) {
 	mainGame->AddDebugMsg(msgbuf);
 	return 0;
 }
+void IndependentDuel::IndependentDuelTimeout(unsigned char last_response){
+
+}
 void IndependentDuel::SingleTimer(evutil_socket_t fd, short events, void* arg) {
 	IndependentDuel* sd = static_cast<IndependentDuel*>(arg);
 	sd->time_elapsed++;
 	if(sd->time_elapsed >= sd->time_limit[sd->last_response] || sd->time_limit[sd->last_response] <= 0) {
-		sd->father->IndependentDuelTimeout(sd->last_response, sd->father);
-		sd->father->EndDuel();
-		sd->father->DuelEndProc();
+		sd->father->IndependentDuelTimeout(sd->last_response);
+		sd->father->IndependentDuelStopProc(sd->originplayerid);
 		event_del(sd->etimer);
 		return;
 	}
 	timeval timeout = { 1, 0 };
 	event_add(sd->etimer, &timeout);
+}
+void IndependentDuel::IndependentDuelStopProc(int duelid) {
+
 }
 
 }

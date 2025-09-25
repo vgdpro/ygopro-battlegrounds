@@ -32,6 +32,8 @@ public:
 	int Analyze(unsigned char* msgbuffer, unsigned int len) override;
 	void GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len) override;
 	void TimeConfirm(DuelPlayer* dp) override;
+	void IndependentDuelStopProc(int duelid) override;
+	void IndependentDuelTimeout(unsigned char last_response) override;
 #ifdef YGOPRO_SERVER_MODE
 	void RequestField(DuelPlayer* dp) override;
 #endif
@@ -58,8 +60,6 @@ public:
 	void RefreshRemove(int player, int flag = 0x81fff, int use_cache = 1);
 #endif
 	void RefreshSingle(int player, int location, int sequence, int flag = 0xf81fff);
-	void IndependentDuelStopProc(int duelid);
-	void IndependentDuelTimeout(unsigned char last_response, SingleDuel* sd);
 
 	static uint32_t MessageHandler(intptr_t fduel, uint32_t type);
 	static void SingleTimer(evutil_socket_t fd, short events, void* arg);
@@ -78,7 +78,6 @@ protected:
 	unsigned char hand_result[2]{};
 	unsigned char last_response{ 0 };
 	std::set<DuelPlayer*> observers;
-	intptr_t ppduel{};
 #ifdef YGOPRO_SERVER_MODE
 	DuelPlayer* cache_recorder{};
 	DuelPlayer* replay_recorder{};

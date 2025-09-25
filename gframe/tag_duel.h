@@ -7,6 +7,11 @@
 #include "replay.h"
 
 namespace ygo {
+class IndependentDuel;
+class TagSingleDuel;
+}
+
+namespace ygo {
 
 class TagDuel: public DuelMode {
 public:
@@ -28,12 +33,14 @@ public:
 	int Analyze(unsigned char* msgbuffer, unsigned int len) override;
 	void GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len) override;
 	void TimeConfirm(DuelPlayer* dp) override;
+	void IndependentDuelStopProc(int duelid) override;
+	void IndependentDuelTimeout(unsigned char last_response) override;
 #ifdef YGOPRO_SERVER_MODE
 	void RequestField(DuelPlayer* dp) override;
 #endif
 	void EndDuel() override;
 	
-	void DuelEndProc();
+	void DuelEndProc(int player);
 	void WaitforResponse(int playerid);
 #ifdef YGOPRO_SERVER_MODE
 	void RefreshMzone(int player, int flag = 0x881fff, int use_cache = 1, DuelPlayer* dp = 0);
@@ -60,6 +67,11 @@ private:
 protected:
 	DuelPlayer* players[4];
 	DuelPlayer* pplayer[4];
+	IndependentDuel* independent_duel[4]{};
+	bool onindependent_duel[4]{};
+	bool ended_independent_duel[4]{};
+	TagSingleDuel* tag_single_duel[2]{};
+	bool ontag_single_duel[2]{};
 	DuelPlayer* cur_player[2];
 	std::set<DuelPlayer*> observers;
 #ifdef YGOPRO_SERVER_MODE
