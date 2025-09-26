@@ -38,6 +38,7 @@ public:
 	void RequestField(DuelPlayer* dp) override;
 #endif
 	void EndDuel() override;
+	void DuelEndProc(int player) override;
 	
 	void DuelEndProc();
 	void WaitforResponse(int playerid);

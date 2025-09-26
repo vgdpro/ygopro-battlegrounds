@@ -236,6 +236,7 @@ public:
 	virtual void EndDuel() = 0;
 	virtual void IndependentDuelStopProc(int duelid) = 0;
 	virtual void IndependentDuelTimeout(unsigned char last_response) = 0;
+	virtual void DuelEndProc(int player) =0;
 
 public:
 	event* etimer { nullptr };

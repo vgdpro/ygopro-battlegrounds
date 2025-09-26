@@ -6,6 +6,9 @@
 #include "independent_duel.h"
 #include "tag_single_duel.h"
 #include "../ocgcore/mtrandom.h"
+#include <algorithm>  
+#include <random>     
+#include <chrono> 
 
 namespace ygo {
 
@@ -633,51 +636,61 @@ void TagDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 // 	Process();
 	tag_single_duel[0] = new TagSingleDuel(false);
 	tag_single_duel[0]->etimer = event_new(NetServer::net_evbase, 0, EV_TIMEOUT | EV_PERSIST, TagSingleDuel::SingleTimer, tag_single_duel[0]);
-	// tag_single_duel[0]->JoinGame(players[0], 0, false);
-	// tag_single_duel[0]->JoinGame(players[1], 0, false);
-	// tag_single_duel[0]->SetFatherDuel(this,0);
-	// ontag_single_duel[0] = true;
-	// tag_single_duel[0]->TPResult(players[0],0);
+	tag_single_duel[0]->JoinGame(players[0], 0, 1);
+	tag_single_duel[0]->JoinGame(players[1], 0, 0);
+	tag_single_duel[0]->SetFatherDuel(this,0);
+	tag_single_duel[0]->TPResult(players[0],0);
 
 	tag_single_duel[1] = new TagSingleDuel(false);
 	tag_single_duel[1]->etimer = event_new(NetServer::net_evbase, 0, EV_TIMEOUT | EV_PERSIST, TagSingleDuel::SingleTimer, tag_single_duel[1]);
-	// tag_single_duel[1]->JoinGame(players[2], 0, false);
-	// tag_single_duel[1]->JoinGame(players[3], 0, false);
-	// tag_single_duel[1]->SetFatherDuel(this,2);
-	// ontag_single_duel[1] = true;
-	// tag_single_duel[1]->TPResult(players[2],0);
+	tag_single_duel[1]->JoinGame(players[2], 0, 1);
+	tag_single_duel[1]->JoinGame(players[3], 0, 0);
+	tag_single_duel[1]->SetFatherDuel(this,1);
+	tag_single_duel[1]->TPResult(players[2],0);
 
 	independent_duel[0] = new IndependentDuel(false);
 	independent_duel[0]->etimer = event_new(NetServer::net_evbase, 0, EV_TIMEOUT | EV_PERSIST, IndependentDuel::SingleTimer, independent_duel[0]);
-	independent_duel[0]->JoinGame(players[0], 0, false);
-	independent_duel[0]->JoinGame(new DuelPlayer(), 0, false);
+	independent_duel[0]->JoinGame(players[0], 0, 1);
+	independent_duel[0]->JoinGame(new DuelPlayer(), 0, 0);
 	independent_duel[0]->SetFatherDuel(this,0);
 	onindependent_duel[0] = true;
 	independent_duel[0]->TPResult(players[0],0);
 
 	independent_duel[1] = new IndependentDuel(false);
 	independent_duel[1]->etimer = event_new(NetServer::net_evbase, 0, EV_TIMEOUT | EV_PERSIST, IndependentDuel::SingleTimer, independent_duel[1]);
-	independent_duel[1]->JoinGame(players[1], 0, false);
-	independent_duel[1]->JoinGame(new DuelPlayer(), 0, 1);
+	independent_duel[1]->JoinGame(players[1], 0, 1);
+	independent_duel[1]->JoinGame(new DuelPlayer(), 0, 0);
 	independent_duel[1]->SetFatherDuel(this,1);
 	onindependent_duel[1] = true;
 	independent_duel[1]->TPResult(players[1],0);
 
 	independent_duel[2] = new IndependentDuel(false);
 	independent_duel[2]->etimer = event_new(NetServer::net_evbase, 0, EV_TIMEOUT | EV_PERSIST, IndependentDuel::SingleTimer, independent_duel[2]);
-	independent_duel[2]->JoinGame(players[2], 0, false);
-	independent_duel[2]->JoinGame(new DuelPlayer(), 0, false);
+	independent_duel[2]->JoinGame(players[2], 0, 1);
+	independent_duel[2]->JoinGame(new DuelPlayer(), 0, 0);
 	independent_duel[2]->SetFatherDuel(this,2);
 	onindependent_duel[2] = true;
 	independent_duel[2]->TPResult(players[2],0);
 
 	independent_duel[3] = new IndependentDuel(false);
 	independent_duel[3]->etimer = event_new(NetServer::net_evbase, 0, EV_TIMEOUT | EV_PERSIST, IndependentDuel::SingleTimer, independent_duel[3]);
-	independent_duel[3]->JoinGame(players[3], 0, false);
-	independent_duel[3]->JoinGame(new DuelPlayer(), 0, 1);
+	independent_duel[3]->JoinGame(players[3], 0, 1);
+	independent_duel[3]->JoinGame(new DuelPlayer(), 0, 0);
 	independent_duel[3]->SetFatherDuel(this,3);
 	onindependent_duel[3] = true;
 	independent_duel[3]->TPResult(players[3],0);
+
+	std::random_device rd;
+	ExtendedReplayHeader rh;
+	rh.base.id = REPLAY_ID_YRP2;
+	rh.base.version = PRO_VERSION;
+	rh.base.flag = REPLAY_UNIFORM | REPLAY_TAG;
+	rh.base.start_time = (uint32_t)std::time(nullptr);
+	for (auto& x : rh.seed_sequence)
+		x = rd();
+	std::seed_seq seq(std::begin(rh.seed_sequence), std::end(rh.seed_sequence));
+	std::mt19937 rng(seq);
+	std::shuffle(battle_order, battle_order + 4, rng);
 
 	pduel = independent_duel[0]->pduel;
 }
@@ -685,7 +698,11 @@ void TagDuel::Process() {
 	
 }
 void TagDuel::DuelEndProc(int player) {
+	if(ended_independent_duel[player])
+		return;
 	ended_independent_duel[player] = true;
+	onindependent_duel[player] = false;
+	event_del(independent_duel[player]->etimer);
 	NetServer::SendPacketToPlayer(players[player], STOC_DUEL_END);
 	// NetServer::ReSendToPlayer(players[1]);
 	// NetServer::ReSendToPlayer(players[2]);
@@ -737,6 +754,44 @@ void TagDuel::Surrender(DuelPlayer* dp) {
 // 		return;
 // 	}
 // #endif
+	if(ontag_single_duel[0] || ontag_single_duel[1]) {
+		unsigned char startbuf[32]{};
+		auto pbuf = startbuf;
+		BufferIO::WriteInt8(pbuf, MSG_START);
+		BufferIO::WriteInt8(pbuf, 0);
+		BufferIO::WriteInt8(pbuf, host_info.duel_rule);
+		BufferIO::WriteInt32(pbuf, 0);
+		BufferIO::WriteInt32(pbuf, 0);
+		BufferIO::WriteInt16(pbuf, 0);
+		BufferIO::WriteInt16(pbuf, 0);
+		BufferIO::WriteInt16(pbuf, 0);
+		BufferIO::WriteInt16(pbuf, 0);
+		if (dp->type == battle_order[0]) { 
+			tag_single_duel[0]->duel_stage=0;
+			if(dp->state = CTOS_RESPONSE){
+				NetServer::SendBufferToPlayer(players[battle_order[1]], STOC_GAME_MSG, startbuf, 19);
+				BattleStopProc(0);
+			}
+		}else if (dp->type == battle_order[1]) { 
+			tag_single_duel[0]->duel_stage=1;
+			if(dp->state = CTOS_RESPONSE){
+				NetServer::SendBufferToPlayer(players[battle_order[0]], STOC_GAME_MSG, startbuf, 19);
+				BattleStopProc(0);
+			}
+		}else if (dp->type == battle_order[2]) { 
+			tag_single_duel[0]->duel_stage=0;
+			if(dp->state = CTOS_RESPONSE){
+				NetServer::SendBufferToPlayer(players[battle_order[3]], STOC_GAME_MSG, startbuf, 19);
+				BattleStopProc(1);
+			}
+		}else if (dp->type == battle_order[3]) { 
+			tag_single_duel[0]->duel_stage=1;
+			if(dp->state = CTOS_RESPONSE){
+				NetServer::SendBufferToPlayer(players[battle_order[2]], STOC_GAME_MSG, startbuf, 19);
+				BattleStopProc(1);
+			}
+		}
+	}
 	unsigned char wbuf[3];
 	wbuf[0] = MSG_WIN;
 	wbuf[1] = 1;
@@ -765,23 +820,36 @@ void TagDuel::GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len
 		independent_duel[dp->type]->GetResponse(dp, pdata, len);
 		return;
 	}
-	set_responseb(pduel, resb);
-	players[dp->type]->state = 0xff;
-	if(host_info.time_limit) {
-		int resp_type = dp->type < 2 ? 0 : 1;
-		if(time_limit[resp_type] >= time_elapsed)
-			time_limit[resp_type] -= time_elapsed;
-		else time_limit[resp_type] = 0;
-		time_elapsed = 0;
-#ifdef YGOPRO_SERVER_MODE
-		if(time_backed[resp_type] > 0 && time_limit[resp_type] < host_info.time_limit && NetServer::IsCanIncreaseTime(last_game_msg, pdata, len)) {
-			++time_limit[resp_type];
-			++time_compensator[resp_type];
-			--time_backed[resp_type];
-		}
-#endif
+	if(ontag_single_duel[0] || ontag_single_duel[1]){
+		int duelId = -1, seat = -1;
+        if (dp->type == battle_order[0]) { duelId = 0; seat = 0; }
+        else if (dp->type == battle_order[1]) { duelId = 0; seat = 1; }
+        else if (dp->type == battle_order[2]) { duelId = 1; seat = 0; }
+        else if (dp->type == battle_order[3]) { duelId = 1; seat = 1; }
+
+        if (duelId != -1) {
+            tag_single_duel[duelId]->GetResponse(dp, pdata, len, seat);
+            return;
+        }
+		return;
 	}
-	Process();
+// 	set_responseb(pduel, resb);
+// 	players[dp->type]->state = 0xff;
+// 	if(host_info.time_limit) {
+// 		int resp_type = dp->type < 2 ? 0 : 1;
+// 		if(time_limit[resp_type] >= time_elapsed)
+// 			time_limit[resp_type] -= time_elapsed;
+// 		else time_limit[resp_type] = 0;
+// 		time_elapsed = 0;
+// #ifdef YGOPRO_SERVER_MODE
+// 		if(time_backed[resp_type] > 0 && time_limit[resp_type] < host_info.time_limit && NetServer::IsCanIncreaseTime(last_game_msg, pdata, len)) {
+// 			++time_limit[resp_type];
+// 			++time_compensator[resp_type];
+// 			--time_backed[resp_type];
+// 		}
+// #endif
+// 	}
+// 	Process();
 }
 void TagDuel::EndDuel() {
 	if(!pduel)
@@ -939,22 +1007,35 @@ void TagDuel::TimeConfirm(DuelPlayer* dp) {
 		independent_duel[dp->type]->TimeConfirm(dp);
 		return;
 	}
-	if(dp != cur_player[last_response])
+	if(ontag_single_duel[0] || ontag_single_duel[1]){
+		int duelId = -1, seat = -1;
+        if (dp->type == battle_order[0]) { duelId = 0; seat = 0; }
+        else if (dp->type == battle_order[1]) { duelId = 0; seat = 1; }
+        else if (dp->type == battle_order[2]) { duelId = 1; seat = 0; }
+        else if (dp->type == battle_order[3]) { duelId = 1; seat = 1; }
+
+        if (duelId != -1) {
+            tag_single_duel[duelId]->TimeConfirm(dp, seat);
+            return;
+        }
 		return;
-	cur_player[last_response]->state = CTOS_RESPONSE;
-#ifdef YGOPRO_SERVER_MODE
-	if(time_elapsed < 10 && time_elapsed <= time_compensator[dp->type]){
-		time_compensator[dp->type] -= time_elapsed;
-		time_elapsed = 0;
 	}
-	else {
-		time_limit[dp->type] -= time_elapsed;
-		time_elapsed = 0;
-	}
-#else
-	if(time_elapsed < 10)
-		time_elapsed = 0;
-#endif //YGOPRO_SERVER_MODE
+// 	if(dp != cur_player[last_response])
+// 		return;
+// 	cur_player[last_response]->state = CTOS_RESPONSE;
+// #ifdef YGOPRO_SERVER_MODE
+// 	if(time_elapsed < 10 && time_elapsed <= time_compensator[dp->type]){
+// 		time_compensator[dp->type] -= time_elapsed;
+// 		time_elapsed = 0;
+// 	}
+// 	else {
+// 		time_limit[dp->type] -= time_elapsed;
+// 		time_elapsed = 0;
+// 	}
+// #else
+// 	if(time_elapsed < 10)
+// 		time_elapsed = 0;
+// #endif //YGOPRO_SERVER_MODE
 }
 inline int TagDuel::WriteUpdateData(int& player, int location, int& flag, unsigned char*& qbuf, int& use_cache) {
 	flag |= (QUERY_CODE | QUERY_POSITION);
@@ -1314,56 +1395,154 @@ void TagDuel::TagTimer(evutil_socket_t fd, short events, void* arg) {
 void TagDuel::IndependentDuelStopProc(int duelid) {
 	onindependent_duel[duelid] = false;
 	unsigned char msg = MSG_WAITING;
-	NetServer::SendPacketToPlayer(players[duelid], STOC_GAME_MSG, msg);
+	if(ended_independent_duel[duelid])
+		NetServer::SendPacketToPlayer(players[duelid], STOC_GAME_MSG, msg);
 	if((!onindependent_duel[0]||ended_independent_duel[0]) && (!onindependent_duel[1]||ended_independent_duel[1]) && 
 		(!onindependent_duel[2]||ended_independent_duel[2]) && (!onindependent_duel[3]||ended_independent_duel[3])) {
-		onindependent_duel[0] = true;
-		onindependent_duel[1] = true;
-		onindependent_duel[2] = true;
-		onindependent_duel[3] = true;
+		// onindependent_duel[0] = true;
+		// onindependent_duel[1] = true;
+		// onindependent_duel[2] = true;
+		// onindependent_duel[3] = true;
 
 
-		independent_duel[1]->Process();
-		independent_duel[0]->Process();
-		independent_duel[2]->Process();
-		independent_duel[3]->Process();
+		// independent_duel[1]->Process();
+		// independent_duel[0]->Process();
+		// independent_duel[2]->Process();
+		// independent_duel[3]->Process();
+		if(!ended_independent_duel[battle_order[0]]||!ended_independent_duel[battle_order[1]]) {
+			int opt = 0;
+			tag_single_duel[0]->ready[1]= false;
+			if(ended_independent_duel[battle_order[0]]){
+				int temp = battle_order[0];
+				battle_order[0] = battle_order[1];
+				battle_order[1] = temp;
+				opt = DUEL_SIMPLE_AI;
+				tag_single_duel[0]->ready[1]= true;
+			}else if(ended_independent_duel[battle_order[1]]){
+				opt = DUEL_SIMPLE_AI;
+				tag_single_duel[0]->ready[1]= true;
+			}
+			tag_single_duel[0]->JoinGame(players[battle_order[0]], 0, 1);
+			tag_single_duel[0]->JoinGame(players[battle_order[1]], 0, 0);
 
-// 		event_del(etimer);
-// 		time_limit[0] = host_info.time_limit;
-// 		time_limit[1] = host_info.time_limit;
+			ontag_single_duel[0] = true;
+			tag_single_duel[0]->UpdateTimmer();
 
-// 		unsigned char startbuf[32]{};
-// 		auto pbuf = startbuf;
-// 		BufferIO::WriteInt8(pbuf, MSG_START);
-// 		BufferIO::WriteInt8(pbuf, 0);
-// 		BufferIO::WriteInt8(pbuf, host_info.duel_rule);
-// 		BufferIO::WriteInt32(pbuf, host_info.start_lp);
-// 		BufferIO::WriteInt32(pbuf, host_info.start_lp);
-// 		BufferIO::WriteInt16(pbuf, 0);
-// 		BufferIO::WriteInt16(pbuf, 0);
-// 		BufferIO::WriteInt16(pbuf, 0);
-// 		BufferIO::WriteInt16(pbuf, 0);
-// 		NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
-// 		startbuf[1] = 1;
-// 		NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
-// 		if(host_info.time_limit) {
-// 			time_elapsed = 0;
-// #ifdef YGOPRO_SERVER_MODE
-// 			time_compensator[0] = host_info.time_limit;
-// 			time_compensator[1] = host_info.time_limit;
-// 			time_backed[0] = host_info.time_limit;
-// 			time_backed[1] = host_info.time_limit;
-// 			last_game_msg = 0;
-// #endif
-// 			timeval timeout = { 1, 0 };
-// 			event_add(etimer, &timeout);
-// 		}
+			unsigned char startbuf[32]{};
+			auto pbuf = startbuf;
+			BufferIO::WriteInt8(pbuf, MSG_START);
+			BufferIO::WriteInt8(pbuf, 0);
+			BufferIO::WriteInt8(pbuf, host_info.duel_rule);
+			BufferIO::WriteInt32(pbuf, host_info.start_lp);
+			BufferIO::WriteInt32(pbuf, host_info.start_lp);
+			BufferIO::WriteInt16(pbuf, 0);
+			BufferIO::WriteInt16(pbuf, 0);
+			BufferIO::WriteInt16(pbuf, 0);
+			BufferIO::WriteInt16(pbuf, 0);
+			NetServer::SendBufferToPlayer(players[battle_order[0]], STOC_GAME_MSG, startbuf, 19);
+			if(opt != DUEL_SIMPLE_AI){
+				startbuf[1] = 1;
+				NetServer::SendBufferToPlayer(players[battle_order[1]], STOC_GAME_MSG, startbuf, 19);
+			}
+			copy_duel_data(tag_single_duel[0]->pduel, independent_duel[battle_order[0]]->pduel, independent_duel[battle_order[1]]->pduel, opt);
+			reload_field_info(tag_single_duel[0]->pduel);
+		}
+
+		if(!ended_independent_duel[battle_order[2]]||!ended_independent_duel[battle_order[3]]) {
+			int opt = 0;
+			tag_single_duel[1]->ready[1]= false;
+			if(ended_independent_duel[battle_order[2]]){
+				int temp = battle_order[2];
+				battle_order[2] = battle_order[3];
+				battle_order[3] = temp;
+				opt = DUEL_SIMPLE_AI;
+				tag_single_duel[1]->ready[1]= true;
+			}else if(ended_independent_duel[battle_order[3]]){
+				opt = DUEL_SIMPLE_AI;
+				tag_single_duel[1]->ready[1]= true;
+			}
+			
+			tag_single_duel[1]->JoinGame(players[battle_order[2]], 0, 1);
+			tag_single_duel[1]->JoinGame(players[battle_order[3]], 0, 0);
+
+			
+
+			ontag_single_duel[1] = true;
+			tag_single_duel[1]->UpdateTimmer();
 
 
-// 		copy_duel_data(pduel, independent_duel[0]->pduel, independent_duel[1]->pduel, 0xffff);
-// 		reload_field_info(pduel);
-// 		Process();
+			unsigned char startbuf[32]{};
+			auto pbuf = startbuf;
+			BufferIO::WriteInt8(pbuf, MSG_START);
+			BufferIO::WriteInt8(pbuf, 0);
+			BufferIO::WriteInt8(pbuf, host_info.duel_rule);
+			BufferIO::WriteInt32(pbuf, host_info.start_lp);
+			BufferIO::WriteInt32(pbuf, host_info.start_lp);
+			BufferIO::WriteInt16(pbuf, 0);
+			BufferIO::WriteInt16(pbuf, 0);
+			BufferIO::WriteInt16(pbuf, 0);
+			BufferIO::WriteInt16(pbuf, 0);
+			NetServer::SendBufferToPlayer(players[battle_order[2]], STOC_GAME_MSG, startbuf, 19);
+			if(opt != DUEL_SIMPLE_AI){
+				startbuf[1] = 1;
+				NetServer::SendBufferToPlayer(players[battle_order[3]], STOC_GAME_MSG, startbuf, 19);
+			}
+			copy_duel_data(tag_single_duel[1]->pduel, independent_duel[battle_order[2]]->pduel, independent_duel[battle_order[3]]->pduel, opt);
+			reload_field_info(tag_single_duel[1]->pduel);
+		}
+
+		if(ontag_single_duel[0]){
+			tag_single_duel[0]->duel_stage = 2;
+			tag_single_duel[0]->Process();
+		}
+		if(ontag_single_duel[1]){
+			tag_single_duel[1]->duel_stage = 2;
+			tag_single_duel[1]->Process();
+		}
 	}
+}
+void TagDuel::BattleStopProc(int duelid) {
+	ontag_single_duel[duelid] = false;
+	// unsigned char msg = MSG_WAITING;
+	// NetServer::SendPacketToPlayer(players[duelid], STOC_GAME_MSG, msg);
+	if(!ontag_single_duel[0] && !ontag_single_duel[1]) {
+
+		set_player_state(tag_single_duel[0]->pduel,independent_duel[battle_order[0]]->pduel,independent_duel[battle_order[1]]->pduel);
+		set_player_state(tag_single_duel[1]->pduel,independent_duel[battle_order[2]]->pduel,independent_duel[battle_order[3]]->pduel);
+
+		std::random_device rd;
+		ExtendedReplayHeader rh;
+		rh.base.id = REPLAY_ID_YRP2;
+		rh.base.version = PRO_VERSION;
+		rh.base.flag = REPLAY_UNIFORM | REPLAY_TAG;
+		rh.base.start_time = (uint32_t)std::time(nullptr);
+		for (auto& x : rh.seed_sequence)
+			x = rd();
+		std::seed_seq seq(std::begin(rh.seed_sequence), std::end(rh.seed_sequence));
+		std::mt19937 rng(seq);
+    	std::shuffle(battle_order, battle_order + 4, rng);
+
+		if(!ended_independent_duel[0]){
+			onindependent_duel[0] = true;
+			independent_duel[0]->UpdateTimmer();
+			independent_duel[0]->Process();	
+		}	
+		if(!ended_independent_duel[1]){
+			onindependent_duel[1] = true;
+			independent_duel[1]->UpdateTimmer();
+			independent_duel[1]->Process();	
+		}	
+		if(!ended_independent_duel[2]){
+			onindependent_duel[2] = true;
+			independent_duel[2]->UpdateTimmer();
+			independent_duel[2]->Process();	
+		}	
+		if(!ended_independent_duel[3]){
+			onindependent_duel[3] = true;
+			independent_duel[3]->UpdateTimmer();
+			independent_duel[3]->Process();	
+		}	
+	}	
 }
 
 }

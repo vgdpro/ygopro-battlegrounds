@@ -37,7 +37,8 @@ public:
 	void RequestField(DuelPlayer* dp) override;
 #endif
 	void EndDuel() override;
-	
+	void DuelEndProc(int player) override;
+
 	void DuelEndProc();
 	void WaitforResponse(int playerid);
 #ifdef YGOPRO_SERVER_MODE
@@ -71,6 +72,7 @@ private:
 	int WriteUpdateData(int& player, int location, int& flag, unsigned char*& qbuf, int& use_cache);
 	
 protected:
+	int battle_order[4]{0,1,2,3};
 	DuelPlayer* players[2]{};
 	DuelPlayer* pplayer[2]{};
 	DuelMode* father{};

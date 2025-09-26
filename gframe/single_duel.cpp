@@ -642,16 +642,16 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 
 	independent_duel[0] = new IndependentDuel(false);
 	independent_duel[0]->etimer = event_new(NetServer::net_evbase, 0, EV_TIMEOUT | EV_PERSIST, IndependentDuel::SingleTimer, independent_duel[0]);
-	independent_duel[0]->JoinGame(players[0], 0, false);
-	independent_duel[0]->JoinGame(new DuelPlayer(), 0, false);
+	independent_duel[0]->JoinGame(players[0], 0, 1);
+	independent_duel[0]->JoinGame(new DuelPlayer(), 0, 0);
 	independent_duel[0]->SetFatherDuel(this,0);
 	onindependent_duel[0] = true;
 	independent_duel[0]->TPResult(players[0],0);
 
 	independent_duel[1] = new IndependentDuel(false);
 	independent_duel[1]->etimer = event_new(NetServer::net_evbase, 0, EV_TIMEOUT | EV_PERSIST, IndependentDuel::SingleTimer, independent_duel[1]);
-	independent_duel[1]->JoinGame(players[1], 0, false);
-	independent_duel[1]->JoinGame(new DuelPlayer(), 0, 1);
+	independent_duel[1]->JoinGame(players[1], 0, 1);
+	independent_duel[1]->JoinGame(new DuelPlayer(), 0, 0);
 	independent_duel[1]->SetFatherDuel(this,1);
 	onindependent_duel[1] = true;
 	independent_duel[1]->TPResult(players[1],0);
@@ -679,6 +679,9 @@ void SingleDuel::Process() {
 	}
 	if(stop == 2)
 		DuelEndProc();
+}
+void SingleDuel::DuelEndProc(int player){
+	DuelEndProc();
 }
 void SingleDuel::DuelEndProc() {
 	if(!match_mode) {
@@ -2547,7 +2550,7 @@ void SingleDuel::IndependentDuelStopProc(int duelid) {
 // #endif
 // 		start_duel(pduel, opt);
 
-		copy_duel_data(pduel, independent_duel[0]->pduel, independent_duel[1]->pduel, 0xffff);
+		copy_duel_data(pduel, independent_duel[0]->pduel, independent_duel[1]->pduel,0);
 		if(host_info.time_limit) {
 			time_elapsed = 0;
 #ifdef YGOPRO_SERVER_MODE

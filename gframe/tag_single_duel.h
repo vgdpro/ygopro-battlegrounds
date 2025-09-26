@@ -7,7 +7,7 @@
 #include "replay.h"
 
 namespace ygo {
-
+class TagDuel;
 class TagSingleDuel{
 public:
 	TagSingleDuel(bool is_match);
@@ -16,8 +16,8 @@ public:
 	void TPResult(DuelPlayer* dp, unsigned char tp);
 	void Process();
 	int Analyze(unsigned char* msgbuffer, unsigned int len);
-	void GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len);
-	void TimeConfirm(DuelPlayer* dp);
+	void GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len,int playerid);
+	void TimeConfirm(DuelPlayer* dp,int playerid);
 	void TagSingleDuelStopProc(int duelid);
 	void TagSingleDuelTimeout(unsigned char last_response);
 	void EndDuel();
@@ -46,7 +46,7 @@ public:
 	void RefreshRemove(int player, int flag = 0x681fff, int use_cache = 1);
 #endif
 	void RefreshSingle(int player, int location, int sequence, int flag = 0xf81fff);
-	void SetFatherDuel(DuelMode* sd, int originplayer);
+	void SetFatherDuel(TagDuel* sd, int originplayer);
 	void UpdateTimmer();
 
 	static uint32_t MessageHandler(intptr_t fduel, uint32_t type);
@@ -56,10 +56,11 @@ public:
     event* etimer { nullptr };
 	DuelPlayer* host_player{ nullptr };
 	HostInfo host_info;
-	int duel_stage{};
+	int duel_stage{ 2 };
 	intptr_t pduel{};
 	wchar_t name[20]{};
 	wchar_t pass[20]{};
+    bool ready[2]{};
 
 private:
 	int WriteUpdateData(int& player, int location, int& flag, unsigned char*& qbuf, int& use_cache);
@@ -67,8 +68,8 @@ private:
 protected:
 	DuelPlayer* players[2]{};
 	DuelPlayer* pplayer[2]{};
-	DuelMode* father{};
-	bool ready[2]{};
+	TagDuel* father{};
+    int originplayerid{};
 	Deck pdeck[2];
 	int deck_error[2]{};
 	unsigned char hand_result[2]{};

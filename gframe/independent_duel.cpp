@@ -20,13 +20,11 @@ void IndependentDuel::Chat(DuelPlayer* dp, unsigned char* pdata, int len) {
 
 }
 void IndependentDuel::JoinGame(DuelPlayer* dp, unsigned char* pdata, bool is_creater) {
-	if(!players[0] || !players[1]) {
-		if(!players[0]) {
-			players[0] = dp;
-		} else {
-			players[1] = dp;
-		}
-	} 
+	if(is_creater){
+		players[0] = dp;
+	} else {
+		players[1] = dp;
+	}
 }
 void IndependentDuel::SetFatherDuel(DuelMode* sd, int originplayer){
 	father = sd;
@@ -82,11 +80,11 @@ void IndependentDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	// 	rnd.shuffle_vector(pdeck[0].main);
 	// 	rnd.shuffle_vector(pdeck[1].main);
 	// }
-	time_limit[0] = father->host_info.time_limit;
-	time_limit[1] = father->host_info.time_limit;
 	if(father->host_info.time_limit){
 		host_info.time_limit = father->host_info.time_limit;
 	}
+	time_limit[0] = host_info.time_limit;
+	time_limit[1] = host_info.time_limit;
 	set_script_reader(DataManager::ScriptReaderEx);
 	set_card_reader(DataManager::CardReader);
 	set_card_reader_random(DataManager::CardReaderRandom);
@@ -118,7 +116,7 @@ void IndependentDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	// load(pdeck[0].extra, 0, LOCATION_EXTRA);
 	// load(pdeck[1].main, 1, LOCATION_DECK);
 	// load(pdeck[1].extra, 1, LOCATION_EXTRA);
-	last_replay.Flush();
+	// last_replay.Flush();
 	unsigned char startbuf[32]{};
 	auto pbuf = startbuf;
 	BufferIO::WriteInt8(pbuf, MSG_START);
@@ -197,6 +195,9 @@ void IndependentDuel::Process() {
 void IndependentDuel::DuelEndProc() {
 
 }
+void IndependentDuel::DuelEndProc(int player){
+
+}
 void IndependentDuel::Surrender(DuelPlayer* dp) {
 
 }
@@ -246,20 +247,27 @@ int IndependentDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			break;
 		}
 		case MSG_WIN: {
+			if(duel_count > 0)
+				return 2;
 			player = BufferIO::ReadUInt8(pbuf);
 			type = BufferIO::ReadUInt8(pbuf);
-			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-			if(player > 1) {
-				match_result[duel_count++] = 2;
-				tp_player = 1 - tp_player;
-			} else if(players[player] == pplayer[player]) {
-				match_result[duel_count++] = player;
-				tp_player = 1 - player;
-			} else {
-				match_result[duel_count++] = 1 - player;
-				tp_player = player;
-			}
-			EndDuel();
+			unsigned char* offset1 , *pbuf1;
+			offset1 = offset;
+			pbuf1 = pbuf;
+			duel_count++;
+			Process();
+			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset1, pbuf1 - offset1);
+			// if(player > 1) {
+			// 	match_result[duel_count++] = 2;
+			// 	tp_player = 1 - tp_player;
+			// } else if(players[player] == pplayer[player]) {
+			// 	match_result[duel_count++] = player;
+			// 	tp_player = 1 - player;
+			// } else {
+			// 	match_result[duel_count++] = 1 - player;
+			// 	tp_player = player;
+			// }
+			father->DuelEndProc(originplayerid);
 			return 2;
 		}
 		case MSG_SELECT_BATTLECMD: {

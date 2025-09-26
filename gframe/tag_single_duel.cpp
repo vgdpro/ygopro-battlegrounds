@@ -51,11 +51,11 @@ void TagSingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	// 	rnd.shuffle_vector(pdeck[0].main);
 	// 	rnd.shuffle_vector(pdeck[1].main);
 	// }
-	time_limit[0] = father->host_info.time_limit;
-	time_limit[1] = father->host_info.time_limit;
 	if(father->host_info.time_limit){
 		host_info.time_limit = father->host_info.time_limit;
 	}
+	time_limit[0] = host_info.time_limit;
+	time_limit[1] = host_info.time_limit;
 	set_script_reader(DataManager::ScriptReaderEx);
 	set_card_reader(DataManager::CardReader);
 	set_card_reader_random(DataManager::CardReaderRandom);
@@ -160,6 +160,37 @@ void TagSingleDuel::Process() {
 			stop = Analyze(engineBuffer.data(), engLen);
 		}
 	}
+    if(stop == 1 && duel_stage != 2){
+        if(duel_stage == 1){
+            unsigned char startbuf[32]{};
+            auto pbuf = startbuf;
+            BufferIO::WriteInt8(pbuf, MSG_START);
+            BufferIO::WriteInt8(pbuf, 0);
+            BufferIO::WriteInt8(pbuf, father->host_info.duel_rule);
+            BufferIO::WriteInt32(pbuf, host_info.start_lp);
+            BufferIO::WriteInt32(pbuf, host_info.start_lp);
+            BufferIO::WriteInt16(pbuf, 0);
+            BufferIO::WriteInt16(pbuf, 0);
+            BufferIO::WriteInt16(pbuf, 0);
+            BufferIO::WriteInt16(pbuf, 0);
+            NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
+            father->BattleStopProc(originplayerid);
+        } else if(duel_stage == 0){
+            unsigned char startbuf[32]{};
+            auto pbuf = startbuf;
+            BufferIO::WriteInt8(pbuf, MSG_START);
+            BufferIO::WriteInt8(pbuf, 0);
+            BufferIO::WriteInt8(pbuf, father->host_info.duel_rule);
+            BufferIO::WriteInt32(pbuf, host_info.start_lp);
+            BufferIO::WriteInt32(pbuf, host_info.start_lp);
+            BufferIO::WriteInt16(pbuf, 0);
+            BufferIO::WriteInt16(pbuf, 0);
+            BufferIO::WriteInt16(pbuf, 0);
+            BufferIO::WriteInt16(pbuf, 0);
+            NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
+            father->BattleStopProc(originplayerid);
+        }
+    }
 	// if(stop == 2)
 	// 	DuelEndProc();
 }
@@ -173,10 +204,6 @@ int TagSingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 #ifdef YGOPRO_SERVER_MODE
 		last_game_msg = engType;
 #endif
-        FILE *fp1 = fopen("error.log", "at");
-        if(!ready[1])
-            fprintf(fp1, "MSG11 %d\n", engType);
-        fclose(fp1);
 		switch (engType) {
 		case MSG_RETRY: {
 			WaitforResponse(last_response);
@@ -227,23 +254,58 @@ int TagSingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_WIN: {
 			player = BufferIO::ReadUInt8(pbuf);
 			type = BufferIO::ReadUInt8(pbuf);
-			NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
-			if(!ready[1])
-                NetServer::ReSendToPlayer(players[1]);
-			for(auto oit = observers.begin(); oit != observers.end(); ++oit)
-				NetServer::ReSendToPlayer(*oit);
-
-			if(player > 1) {
-				match_result[duel_count++] = 2;
-				tp_player = 1 - tp_player;
-			} else if(players[player] == pplayer[player]) {
-				match_result[duel_count++] = player;
-				tp_player = 1 - player;
-			} else {
-				match_result[duel_count++] = 1 - player;
-				tp_player = player;
-			}
-			EndDuel();
+            event_del(etimer);
+			switch (player)
+            {
+            case PLAYER_NONE:{
+                NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+                if(!ready[1]){}
+                    NetServer::ReSendToPlayer(players[1]);
+                father->DuelEndProc(players[0]->type);
+                father->DuelEndProc(players[1]->type);
+                father->BattleStopProc(originplayerid);
+                break;
+            }
+            case 0:{
+                if(!ready[1]){}
+                    NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, offset, pbuf - offset);
+                father->DuelEndProc(players[1]->type);
+                unsigned char startbuf[32]{};
+                auto pbuf = startbuf;
+                BufferIO::WriteInt8(pbuf, MSG_START);
+                BufferIO::WriteInt8(pbuf, 0);
+                BufferIO::WriteInt8(pbuf, father->host_info.duel_rule);
+                BufferIO::WriteInt32(pbuf, host_info.start_lp);
+                BufferIO::WriteInt32(pbuf, host_info.start_lp);
+                BufferIO::WriteInt16(pbuf, 0);
+                BufferIO::WriteInt16(pbuf, 0);
+                BufferIO::WriteInt16(pbuf, 0);
+                BufferIO::WriteInt16(pbuf, 0);
+                NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
+                father->BattleStopProc(originplayerid);
+                break;
+            }
+            case 1:{
+                NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
+                father->DuelEndProc(players[0]->type);
+                if(!ready[1]){
+                    unsigned char startbuf[32]{};
+                    auto pbuf = startbuf;
+                    BufferIO::WriteInt8(pbuf, MSG_START);
+                    BufferIO::WriteInt8(pbuf, 0);
+                    BufferIO::WriteInt8(pbuf, father->host_info.duel_rule);
+                    BufferIO::WriteInt32(pbuf, host_info.start_lp);
+                    BufferIO::WriteInt32(pbuf, host_info.start_lp);
+                    BufferIO::WriteInt16(pbuf, 0);
+                    BufferIO::WriteInt16(pbuf, 0);
+                    BufferIO::WriteInt16(pbuf, 0);
+                    BufferIO::WriteInt16(pbuf, 0);
+                    NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
+                }
+                father->BattleStopProc(originplayerid);
+                break;
+            }
+            }
 			return 2;
 		}
 		case MSG_SELECT_BATTLECMD: {
@@ -624,7 +686,8 @@ int TagSingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				BufferIO::WriteInt16(pbuf, 0);
 				BufferIO::WriteInt16(pbuf, 0);
 				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, startbuf, 19);
-				NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
+                if(!ready[1])
+                    NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, startbuf, 19);
 				event_del(etimer);
                 father->BattleStopProc(originplayerid);
 				// if(host_info.time_limit){
@@ -1247,7 +1310,7 @@ int TagSingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 	}
 	return 0;
 }
-void TagSingleDuel::GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len) {
+void TagSingleDuel::GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned int len ,int playerid) {
     if(ready[1]){
         unsigned char resb[SIZE_RETURN_VALUE]{};
         if (len > SIZE_RETURN_VALUE)
@@ -1280,17 +1343,17 @@ void TagSingleDuel::GetResponse(DuelPlayer* dp, unsigned char* pdata, unsigned i
 	last_replay.Write<uint8_t>(len);
 	last_replay.WriteData(resb, len);
 	set_responseb(pduel, resb);
-	players[dp->type]->state = 0xff;
+	players[playerid]->state = 0xff;
 	if(host_info.time_limit) {
-		if(time_limit[dp->type] >= time_elapsed)
-			time_limit[dp->type] -= time_elapsed;
-		else time_limit[dp->type] = 0;
+		if(time_limit[playerid] >= time_elapsed)
+			time_limit[playerid] -= time_elapsed;
+		else time_limit[playerid] = 0;
 		time_elapsed = 0;
 #ifdef YGOPRO_SERVER_MODE
-		if(time_backed[dp->type] > 0 && time_limit[dp->type] < host_info.time_limit && NetServer::IsCanIncreaseTime(last_game_msg, pdata, len)) {
-			++time_limit[dp->type];
-			++time_compensator[dp->type];
-			--time_backed[dp->type];
+		if(time_backed[playerid] > 0 && time_limit[playerid] < host_info.time_limit && NetServer::IsCanIncreaseTime(last_game_msg, pdata, len)) {
+			++time_limit[playerid];
+			++time_compensator[playerid];
+			--time_backed[playerid];
 		}
 #endif
 	}
@@ -1302,6 +1365,9 @@ void TagSingleDuel::EndDuel() {
 	pduel = 0;
 }
 void TagSingleDuel::WaitforResponse(int playerid) {
+    if(duel_stage != 2){
+        return;
+    }
     if(ready[1]){
         last_response = playerid;
         // unsigned char msg = MSG_WAITING;
@@ -1440,7 +1506,7 @@ void TagSingleDuel::RequestField(DuelPlayer* dp) {
 	NetServer::SendPacketToPlayer(dp, STOC_FIELD_FINISH);
 }
 #endif //YGOPRO_SERVER_MODE
-void TagSingleDuel::TimeConfirm(DuelPlayer* dp) {
+void TagSingleDuel::TimeConfirm(DuelPlayer* dp, int playerid) {
     if(ready[1]){
         if(host_info.time_limit == 0)
             return;
@@ -1464,16 +1530,16 @@ void TagSingleDuel::TimeConfirm(DuelPlayer* dp) {
     }
 	if(host_info.time_limit == 0)
 		return;
-	if(dp->type != last_response)
+	if(playerid != last_response)
 		return;
 	players[last_response]->state = CTOS_RESPONSE;
 #ifdef YGOPRO_SERVER_MODE
-	if(time_elapsed < 10 && time_elapsed <= time_compensator[dp->type]){
-		time_compensator[dp->type] -= time_elapsed;
+	if(time_elapsed < 10 && time_elapsed <= time_compensator[playerid]){
+		time_compensator[playerid] -= time_elapsed;
 		time_elapsed = 0;
 	}
 	else {
-		time_limit[dp->type] -= time_elapsed;
+		time_limit[playerid] -= time_elapsed;
 		time_elapsed = 0;
 	}
 #else

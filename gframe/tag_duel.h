@@ -39,8 +39,8 @@ public:
 	void RequestField(DuelPlayer* dp) override;
 #endif
 	void EndDuel() override;
-	
-	void DuelEndProc(int player);
+	void DuelEndProc(int player) override;
+
 	void WaitforResponse(int playerid);
 #ifdef YGOPRO_SERVER_MODE
 	void RefreshMzone(int player, int flag = 0x881fff, int use_cache = 1, DuelPlayer* dp = 0);
@@ -60,11 +60,13 @@ public:
 
 	static uint32_t MessageHandler(intptr_t fduel, uint32_t type);
 	static void TagTimer(evutil_socket_t fd, short events, void* arg);
+	void BattleStopProc(int duelid);
 
 private:
 	int WriteUpdateData(int& player, int location, int& flag, unsigned char*& qbuf, int& use_cache);
 	
 protected:
+	int battle_order[4]{0,1,2,3};
 	DuelPlayer* players[4];
 	DuelPlayer* pplayer[4];
 	IndependentDuel* independent_duel[4]{};
