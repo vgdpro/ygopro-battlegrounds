@@ -2436,35 +2436,35 @@ uint32_t SingleDuel::MessageHandler(intptr_t fduel, uint32_t type) {
 	return 0;
 }
 void SingleDuel::SingleTimer(evutil_socket_t fd, short events, void* arg) {
-	SingleDuel* sd = static_cast<SingleDuel*>(arg);
-	sd->time_elapsed++;
-	if(sd->time_elapsed >= sd->time_limit[sd->last_response] || sd->time_limit[sd->last_response] <= 0) {
-		unsigned char wbuf[3];
-		uint32_t player = sd->last_response;
-		wbuf[0] = MSG_WIN;
-		wbuf[1] = 1 - player;
-		wbuf[2] = 0x3;
-		NetServer::SendBufferToPlayer(sd->players[0], STOC_GAME_MSG, wbuf, 3);
-		NetServer::ReSendToPlayer(sd->players[1]);
-		for(auto oit = sd->observers.begin(); oit != sd->observers.end(); ++oit)
-			NetServer::ReSendToPlayer(*oit);
-#ifdef YGOPRO_SERVER_MODE
-		NetServer::ReSendToPlayers(sd->cache_recorder, sd->replay_recorder);
-#endif
-		if(sd->players[player] == sd->pplayer[player]) {
-			sd->match_result[sd->duel_count++] = 1 - player;
-			sd->tp_player = player;
-		} else {
-			sd->match_result[sd->duel_count++] = player;
-			sd->tp_player = 1 - player;
-		}
-		sd->EndDuel();
-		sd->DuelEndProc();
-		event_del(sd->etimer);
-		return;
-	}
-	timeval timeout = { 1, 0 };
-	event_add(sd->etimer, &timeout);
+// 	SingleDuel* sd = static_cast<SingleDuel*>(arg);
+// 	sd->time_elapsed++;
+// 	if(sd->time_elapsed >= sd->time_limit[sd->last_response] || sd->time_limit[sd->last_response] <= 0) {
+// 		unsigned char wbuf[3];
+// 		uint32_t player = sd->last_response;
+// 		wbuf[0] = MSG_WIN;
+// 		wbuf[1] = 1 - player;
+// 		wbuf[2] = 0x3;
+// 		NetServer::SendBufferToPlayer(sd->players[0], STOC_GAME_MSG, wbuf, 3);
+// 		NetServer::ReSendToPlayer(sd->players[1]);
+// 		for(auto oit = sd->observers.begin(); oit != sd->observers.end(); ++oit)
+// 			NetServer::ReSendToPlayer(*oit);
+// #ifdef YGOPRO_SERVER_MODE
+// 		NetServer::ReSendToPlayers(sd->cache_recorder, sd->replay_recorder);
+// #endif
+// 		if(sd->players[player] == sd->pplayer[player]) {
+// 			sd->match_result[sd->duel_count++] = 1 - player;
+// 			sd->tp_player = player;
+// 		} else {
+// 			sd->match_result[sd->duel_count++] = player;
+// 			sd->tp_player = 1 - player;
+// 		}
+// 		sd->EndDuel();
+// 		sd->DuelEndProc();
+// 		event_del(sd->etimer);
+// 		return;
+// 	}
+// 	timeval timeout = { 1, 0 };
+// 	event_add(sd->etimer, &timeout);
 }
 void SingleDuel::IndependentDuelTimeout(unsigned char last_response){
 	unsigned char wbuf[3];

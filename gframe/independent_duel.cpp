@@ -153,11 +153,11 @@ void IndependentDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 }
 void IndependentDuel::UpdateTimmer() {
 	if(host_info.time_limit) {
-		if(host_info.time_limit && host_info.time_limit - father->host_info.time_limit < 120){
+		if(host_info.time_limit - father->host_info.time_limit < 120){
 			host_info.time_limit += 60;
-			time_limit[0] = host_info.time_limit;
-			time_limit[1] = host_info.time_limit;
 		}
+		time_limit[0] = host_info.time_limit;
+		time_limit[1] = host_info.time_limit;
 		time_elapsed = 0;
 #ifdef YGOPRO_SERVER_MODE
 		time_compensator[0] = host_info.time_limit;
@@ -1354,8 +1354,20 @@ void IndependentDuel::SingleTimer(evutil_socket_t fd, short events, void* arg) {
 	IndependentDuel* sd = static_cast<IndependentDuel*>(arg);
 	sd->time_elapsed++;
 	if(sd->time_elapsed >= sd->time_limit[sd->last_response] || sd->time_limit[sd->last_response] <= 0) {
-		sd->father->IndependentDuelTimeout(sd->last_response);
-		sd->father->IndependentDuelStopProc(sd->originplayerid);
+		int back = force_to_battle(sd->pduel);
+		if(back == 0){
+			if(sd->players[0]->state == CTOS_RESPONSE){
+				unsigned char response_buf[SIZE_RETURN_VALUE];
+				size_t response_len = 0;
+				int32_t respI =6;
+				std::memcpy(response_buf, &respI, sizeof respI);
+				response_len = sizeof respI;
+				sd->GetResponse(sd->players[0], response_buf, response_len);
+			}
+			else{
+				return;
+			}
+		}
 		event_del(sd->etimer);
 		return;
 	}
