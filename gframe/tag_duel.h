@@ -64,6 +64,7 @@ public:
 
 private:
 	int WriteUpdateData(int& player, int location, int& flag, unsigned char*& qbuf, int& use_cache);
+	void shulffle_battle_order();
 	
 protected:
 	int battle_order[4]{0,1,2,3};
@@ -93,6 +94,7 @@ protected:
 	unsigned char turn_count;
 	short time_limit[2];
 	short time_elapsed;
+	bool first_shuffle{true};
 #ifdef YGOPRO_SERVER_MODE
 	short time_compensator[2]{};
 	short time_backed[2]{};

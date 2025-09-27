@@ -25,12 +25,71 @@ TagDuel::TagDuel() {
 TagDuel::~TagDuel() {
 }
 void TagDuel::Chat(DuelPlayer* dp, unsigned char* pdata, int len) {
+	auto reverse = [&](uint8_t player) {
+		uint8_t sendto = 0;
+		switch (player)
+		{
+		case 0:
+			sendto = 2;
+			break;
+		case 1:
+			sendto = 3;
+			break;
+		case 2:
+			sendto = 0;
+			break;
+		case 3:
+			sendto = 1;
+			break;
+		}
+		return sendto;
+	};
+
 	unsigned char scc[SIZE_STOC_CHAT];
-	const auto scc_size = NetServer::CreateChatPacket(pdata, len, scc, dp->type);
-	if (!scc_size)
-		return;
-	for(int i = 0; i < 4; ++i)
-		NetServer::SendBufferToPlayer(players[i], STOC_CHAT, scc, scc_size);
+	if(!ended_independent_duel[0]){
+		uint8_t sendto =dp->type;
+		if((ontag_single_duel[0] && battle_order[1] == 0 )||(ontag_single_duel[1] && battle_order[3] == 0 )){
+			sendto = reverse(sendto);
+		}
+		const auto scc_size = NetServer::CreateChatPacket(pdata, len, scc, sendto);
+		if (!scc_size)
+			return;
+		NetServer::SendBufferToPlayer(players[0], STOC_CHAT, scc, scc_size);
+	}
+
+	if(!ended_independent_duel[1]){
+		uint8_t sendto =dp->type;
+		if((ontag_single_duel[0] && battle_order[1] == 1 )||(ontag_single_duel[1] && battle_order[3] == 1 )){
+			sendto = reverse(sendto);
+		}
+		const auto scc_size = NetServer::CreateChatPacket(pdata, len, scc, sendto);
+		if (!scc_size)
+			return;
+		NetServer::SendBufferToPlayer(players[1], STOC_CHAT, scc, scc_size);
+	}
+
+	if(!ended_independent_duel[2]){
+		uint8_t sendto =reverse(dp->type);
+		if((ontag_single_duel[0] && battle_order[1] == 2 )||(ontag_single_duel[1] && battle_order[3] == 2 )){
+			sendto = reverse(sendto);
+		}
+		const auto scc_size = NetServer::CreateChatPacket(pdata, len, scc, sendto);
+		if (!scc_size)
+			return;
+		NetServer::SendBufferToPlayer(players[2], STOC_CHAT, scc, scc_size);
+	}
+
+	if(!ended_independent_duel[3]){
+		uint8_t sendto =reverse(dp->type);
+		if((ontag_single_duel[0] && battle_order[1] == 3 )||(ontag_single_duel[1] && battle_order[3] == 3 )){
+			sendto = reverse(sendto);
+		}
+		const auto scc_size = NetServer::CreateChatPacket(pdata, len, scc, sendto);
+		if (!scc_size)
+			return;
+		NetServer::SendBufferToPlayer(players[3], STOC_CHAT, scc, scc_size);
+	}
+
 	for(auto pit = observers.begin(); pit != observers.end(); ++pit)
 		NetServer::ReSendToPlayer(*pit);
 #ifdef YGOPRO_SERVER_MODE
@@ -680,17 +739,7 @@ void TagDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	onindependent_duel[3] = true;
 	independent_duel[3]->TPResult(players[3],0);
 
-	std::random_device rd;
-	ExtendedReplayHeader rh;
-	rh.base.id = REPLAY_ID_YRP2;
-	rh.base.version = PRO_VERSION;
-	rh.base.flag = REPLAY_UNIFORM | REPLAY_TAG;
-	rh.base.start_time = (uint32_t)std::time(nullptr);
-	for (auto& x : rh.seed_sequence)
-		x = rd();
-	std::seed_seq seq(std::begin(rh.seed_sequence), std::end(rh.seed_sequence));
-	std::mt19937 rng(seq);
-	std::shuffle(battle_order, battle_order + 4, rng);
+    shulffle_battle_order();
 
 	pduel = independent_duel[0]->pduel;
 }
@@ -737,6 +786,38 @@ void TagDuel::DuelEndProc(int player) {
 		// end_duel(pduel);
 		// event_del(etimer);
 	}
+}
+void TagDuel::shulffle_battle_order(){
+	int last_order[4] = {battle_order[0], battle_order[1], battle_order[2], battle_order[3]};
+	thread_local std::mt19937_64 rng(std::random_device{}() ^ 
+		std::chrono::system_clock::now().time_since_epoch().count());
+	
+	// 尝试最多100次找到不同的顺序
+	for (int attempts = 0; attempts < 100; ++attempts) {
+		std::shuffle(std::begin(battle_order), std::end(battle_order), rng);
+		
+		// 检查对战组合是否与上次不同
+		bool is_different = true;
+		for (int i = 0; i < 4; i += 2) {
+			// 检查当前对战组是否与上次任意一组相同
+			if ((battle_order[i] == last_order[0] && battle_order[i+1] == last_order[1]) ||
+				(battle_order[i] == last_order[1] && battle_order[i+1] == last_order[0]) ||
+				(battle_order[i] == last_order[2] && battle_order[i+1] == last_order[3]) ||
+				(battle_order[i] == last_order[3] && battle_order[i+1] == last_order[2])) {
+				is_different = false;
+				break;
+			}
+		}
+		
+		if (is_different || first_shuffle) {
+			first_shuffle = false;
+			return;
+		}
+	}
+	
+	// 如果100次尝试后仍未找到不同顺序，强制交换两组对战
+	std::swap(battle_order[0], battle_order[2]);
+	std::swap(battle_order[1], battle_order[3]);
 }
 void TagDuel::Surrender(DuelPlayer* dp) {
 	if(dp->type > 3 || !pduel)
@@ -899,104 +980,32 @@ void TagDuel::WaitforResponse(int playerid) {
 void TagDuel::RequestField(DuelPlayer* dp) {
 	if(dp->type > 3)
 		return;
-	uint8_t player = (dp->type > 1) ? 1 : 0;
-	NetServer::SendPacketToPlayer(dp, STOC_DUEL_START);
-
-	uint8_t buf[1024];
-	uint8_t* temp_buf = buf;
-	auto WriteMsg = [&](const std::function<void(uint8_t*&)> &writer) {
-		temp_buf = buf;
-		writer(temp_buf);
-		NetServer::SendBufferToPlayer(dp, STOC_GAME_MSG, buf, temp_buf - buf);
-	};
-
-	WriteMsg([&](uint8_t*& pbuf) {
-		BufferIO::WriteInt8(pbuf, MSG_START);
-		BufferIO::WriteInt8(pbuf, player);
-		BufferIO::WriteInt8(pbuf, host_info.duel_rule);
-		BufferIO::WriteInt32(pbuf, host_info.start_lp);
-		BufferIO::WriteInt32(pbuf, host_info.start_lp);
-		BufferIO::WriteInt16(pbuf, 0);
-		BufferIO::WriteInt16(pbuf, 0);
-		BufferIO::WriteInt16(pbuf, 0);
-		BufferIO::WriteInt16(pbuf, 0);
-	});
-
-	uint8_t newturn_count = turn_count % 4;
-	if(newturn_count == 0)
-		newturn_count = 4;
-	for (uint8_t i = 0; i < newturn_count; ++i) {
-		WriteMsg([&](uint8_t*& pbuf) {
-			BufferIO::WriteInt8(pbuf, MSG_NEW_TURN);
-			BufferIO::WriteInt8(pbuf, i % 2);
-		});
+	if(ended_independent_duel[dp->type])
+		return;
+	if(onindependent_duel[0] || onindependent_duel[1] || onindependent_duel[2] || onindependent_duel[3]) {
+		independent_duel[dp->type]->RequestField(dp);
+		return;
 	}
-
-	WriteMsg([&](uint8_t*& pbuf) {
-		BufferIO::WriteInt8(pbuf, MSG_NEW_PHASE);
-		BufferIO::WriteInt16(pbuf, phase);
-	});
-
-	WriteMsg([&](uint8_t*& pbuf) {
-		auto length = query_field_info(pduel, pbuf);
-		pbuf += length;
-	});
-
-	RefreshMzone(1 - player, 0xefffff, 0, dp);
-	RefreshMzone(player, 0xefffff, 0, dp);
-	RefreshSzone(1 - player, 0xefffff, 0, dp);
-	RefreshSzone(player, 0xefffff, 0, dp);
-	RefreshHand(1 - player, 0xefffff, 0, dp);
-	RefreshHand(player, 0xefffff, 0, dp);
-	RefreshGrave(1 - player, 0xefffff, 0, dp);
-	RefreshGrave(player, 0xefffff, 0, dp);
-	RefreshExtra(1 - player, 0xefffff, 0, dp);
-	RefreshExtra(player, 0xefffff, 0, dp);
-	RefreshRemoved(1 - player, 0xefffff, 0, dp);
-	RefreshRemoved(player, 0xefffff, 0, dp);
-
-	uint8_t query_buffer[SIZE_QUERY_BUFFER];
-		for(uint8_t i = 0; i < 2; ++i) {
-		// get decktop card
-		auto qlen = query_field_card(pduel, i, LOCATION_DECK, QUERY_CODE | QUERY_POSITION, query_buffer, 0);
-		if(!qlen)
-			continue; // no cards in deck
-		uint8_t *qbuf = query_buffer;
-		uint32_t code = 0;
-		uint32_t position = 0;
-		while(qbuf < query_buffer + qlen) {
-			auto clen = BufferIO::ReadInt32(qbuf);
-			if(qbuf + clen - 4 == query_buffer + qlen) {
-				// last card
-				code = *(uint32_t*)(qbuf + 4);
-				position = GetPosition(qbuf, 8);
-			}
-			qbuf += clen - 4;
-		}
-		if(position & POS_FACEUP)
-			code |= 0x80000000; // mark as reversed
-		if(deck_reversed || position & POS_FACEUP)
-			WriteMsg([&](uint8_t*& pbuf) {
-				BufferIO::WriteInt8(pbuf, MSG_DECK_TOP);
-				BufferIO::WriteInt8(pbuf, i);
-				BufferIO::WriteInt8(pbuf, 0);
-				BufferIO::WriteInt32(pbuf, code);
-			});
+	if(ontag_single_duel[0] && (dp->type == battle_order[0] || dp->type == battle_order[1])){
+		tag_single_duel[0]->RequestField(dp);
+		return;
 	}
-
-	/*
-	if(dp == cur_player[last_response])
-		WaitforResponse(last_response);
-	*/
-	STOC_TimeLimit sctl;
-	sctl.player = 1 - last_response;
-	sctl.left_time = time_limit[1 - last_response];
-	NetServer::SendPacketToPlayer(dp, STOC_TIME_LIMIT, sctl);
-	sctl.player = last_response;
-	sctl.left_time = time_limit[last_response] - time_elapsed;
-	NetServer::SendPacketToPlayer(dp, STOC_TIME_LIMIT, sctl);
-
-	NetServer::SendPacketToPlayer(dp, STOC_FIELD_FINISH);
+	if(ontag_single_duel[1] && (dp->type == battle_order[2] || dp->type == battle_order[3])){
+		tag_single_duel[1]->RequestField(dp);
+		return;
+	}
+	unsigned char startbuf[32]{};
+	auto pbuf = startbuf;
+	BufferIO::WriteInt8(pbuf, MSG_START);
+	BufferIO::WriteInt8(pbuf, 0);
+	BufferIO::WriteInt8(pbuf, host_info.duel_rule);
+	BufferIO::WriteInt32(pbuf, 0);
+	BufferIO::WriteInt32(pbuf, 0);
+	BufferIO::WriteInt16(pbuf, 0);
+	BufferIO::WriteInt16(pbuf, 0);
+	BufferIO::WriteInt16(pbuf, 0);
+	BufferIO::WriteInt16(pbuf, 0);
+	NetServer::SendBufferToPlayer(players[dp->type], STOC_GAME_MSG, startbuf, 19);
 }
 #endif //YGOPRO_SERVER_MODE
 void TagDuel::TimeConfirm(DuelPlayer* dp) {
@@ -1510,17 +1519,7 @@ void TagDuel::BattleStopProc(int duelid) {
 		set_player_state(tag_single_duel[0]->pduel,independent_duel[battle_order[0]]->pduel,independent_duel[battle_order[1]]->pduel);
 		set_player_state(tag_single_duel[1]->pduel,independent_duel[battle_order[2]]->pduel,independent_duel[battle_order[3]]->pduel);
 
-		std::random_device rd;
-		ExtendedReplayHeader rh;
-		rh.base.id = REPLAY_ID_YRP2;
-		rh.base.version = PRO_VERSION;
-		rh.base.flag = REPLAY_UNIFORM | REPLAY_TAG;
-		rh.base.start_time = (uint32_t)std::time(nullptr);
-		for (auto& x : rh.seed_sequence)
-			x = rd();
-		std::seed_seq seq(std::begin(rh.seed_sequence), std::end(rh.seed_sequence));
-		std::mt19937 rng(seq);
-    	std::shuffle(battle_order, battle_order + 4, rng);
+		shulffle_battle_order();
 
 		if(!ended_independent_duel[0]){
 			onindependent_duel[0] = true;

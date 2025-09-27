@@ -242,35 +242,49 @@ bool DataManager::GetData(unsigned int code, CardData* pData) const {
 	}
 	return true;
 }
-bool DataManager::GetDatasRandom(std::vector<int>& data,uint32_t count, uint32_t type,bool is_include) {
-	data.clear();
+bool DataManager::GetDatasRandom(std::vector<int>& data, uint32_t count, uint32_t type, bool is_include) {
+    data.clear();
     std::vector<unsigned int> candidates;
     candidates.reserve(_codeset.size());
-    for(unsigned int code : _codeset){
+    
+    for(unsigned int code : _codeset) {
         auto it = _datas.find(code);
         if(it == _datas.end()) continue;
         const auto &d = it->second;
-        if(d.type & TYPE_TOKEN) continue; 
-        if(is_include){
-			if(type == 0 || (d.type & type))
-            candidates.push_back(code);
-		}else{
-			if(type == 0 || !(d.type & type))
-            candidates.push_back(code);
-		}
+        if(d.type & TYPE_TOKEN) continue;
+        
+        if(is_include) {
+            if(type == 0 || (d.type & type))
+                candidates.push_back(code);
+        } else {
+            if(type == 0 || !(d.type & type))
+                candidates.push_back(code);
+        }
     }
-    if(candidates.empty()) return {};
+    
+    if(candidates.empty()) return false;
+    
     std::random_device rd;
-    std::mt19937 gen(rd());
-    std::shuffle(candidates.begin(), candidates.end(), gen);
-    if(count <= 0) return false;
-    if((size_t)count >= candidates.size()) return false;
-
-	data.reserve(count);
-    for (size_t i = 0; i < static_cast<size_t>(count); ++i)
+    auto seed = rd() ^ (
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()
+        ).count() +
+        reinterpret_cast<uintptr_t>(&candidates)
+    );
+    std::mt19937 gen(seed);
+    
+    if(count <= 0 || count >= candidates.size()) {
+        return false;
+    }
+    
+    data.reserve(count);
+    for(size_t i = 0; i < count; ++i) {
+        std::uniform_int_distribution<size_t> dist(i, candidates.size() - 1);
+        size_t j = dist(gen);
+        std::swap(candidates[i], candidates[j]);
         data.push_back(static_cast<int>(candidates[i]));
-    return true;
-
+    }
+    
     return true;
 }
 #ifndef YGOPRO_SERVER_MODE

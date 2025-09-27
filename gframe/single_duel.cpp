@@ -22,7 +22,12 @@ void SingleDuel::Chat(DuelPlayer* dp, unsigned char* pdata, int len) {
 	if (!scc_size)
 		return;
 	NetServer::SendBufferToPlayer(players[0], STOC_CHAT, scc, scc_size);
-	NetServer::ReSendToPlayer(players[1]);
+	if(onindependent_duel[0]|| onindependent_duel[1]){
+		const auto scc_size1 = NetServer::CreateChatPacket(pdata, len, scc, 1-(dp->type));
+		NetServer::SendBufferToPlayer(players[1], STOC_CHAT, scc, scc_size1);
+	}else{
+		NetServer::ReSendToPlayer(players[1]);
+	}
 	for(auto pit = observers.begin(); pit != observers.end(); ++pit)
 		NetServer::ReSendToPlayer(*pit);
 #ifdef YGOPRO_SERVER_MODE
