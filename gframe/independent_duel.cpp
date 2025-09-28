@@ -1355,18 +1355,11 @@ void IndependentDuel::SingleTimer(evutil_socket_t fd, short events, void* arg) {
 	sd->time_elapsed++;
 	if(sd->time_elapsed >= sd->time_limit[sd->last_response] || sd->time_limit[sd->last_response] <= 0) {
 		int back = force_to_battle(sd->pduel);
-		if(back == 0){
-			if(sd->players[0]->state == CTOS_RESPONSE){
-				unsigned char response_buf[SIZE_RETURN_VALUE];
-				size_t response_len = 0;
-				int32_t respI =6;
-				std::memcpy(response_buf, &respI, sizeof respI);
-				response_len = sizeof respI;
-				sd->GetResponse(sd->players[0], response_buf, response_len);
-			}
-			else{
-				return;
-			}
+		if(sd->players[0]->state == CTOS_TIME_CONFIRM) {
+			sd->TimeConfirm(sd->players[0]);
+		}
+		if(sd->players[0]->state == CTOS_RESPONSE){
+			sd->Process();
 		}
 		event_del(sd->etimer);
 		return;
