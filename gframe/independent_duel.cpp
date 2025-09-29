@@ -171,6 +171,7 @@ void IndependentDuel::UpdateTimmer() {
 	}
 }
 void IndependentDuel::Process() {
+	players[0]->state = CTOS_PROCESSING;
 	std::vector<unsigned char> engineBuffer;
 	engineBuffer.reserve(SIZE_MESSAGE_BUFFER);
 	unsigned int engFlag = 0;

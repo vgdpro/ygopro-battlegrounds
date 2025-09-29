@@ -268,6 +268,7 @@ public:
 #define CTOS_PLAYER_INFO	0x10	// CTOS_PlayerInfo
 #define CTOS_CREATE_GAME	0x11	// CTOS_CreateGame
 #define CTOS_JOIN_GAME		0x12	// CTOS_JoinGame
+#define CTOS_PROCESSING		0x18	// no data
 #define CTOS_LEAVE_GAME		0x13	// no data
 #define CTOS_SURRENDER		0x14	// no data
 #define CTOS_TIME_CONFIRM	0x15	// no data
