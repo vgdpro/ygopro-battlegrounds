@@ -153,9 +153,10 @@ void IndependentDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 }
 void IndependentDuel::UpdateTimmer() {
 	if(host_info.time_limit) {
-		if(host_info.time_limit - father->host_info.time_limit < 120){
-			host_info.time_limit += 60;
+		if(turn_id <2){
+			turn_id ++ ;
 		}
+		host_info.time_limit += 30 * turn_id;
 		time_limit[0] = host_info.time_limit;
 		time_limit[1] = host_info.time_limit;
 		time_elapsed = 0;

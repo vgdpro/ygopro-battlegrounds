@@ -79,6 +79,7 @@ protected:
 	int originplayerid{};
 	bool ready[2]{};
 	Deck pdeck[2];
+	int turn_id{ 1 };
 	int deck_error[2]{};
 	unsigned char hand_result[2]{};
 	unsigned char last_response{ 0 };
