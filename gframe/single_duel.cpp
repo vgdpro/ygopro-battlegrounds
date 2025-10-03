@@ -66,11 +66,13 @@ void SingleDuel::JoinGame(DuelPlayer* dp, unsigned char* pdata, bool is_creater)
 		BufferIO::CopyCharArray(pkt->pass, jpass);
 #ifdef YGOPRO_SERVER_MODE
 		if(!std::wcscmp(jpass, L"the Big Brother") && !cache_recorder) {
+			return;
 			is_recorder = true;
 			cache_recorder = dp;
 		}
 #ifndef YGOPRO_SERVER_MODE_DISABLE_CLOUD_REPLAY
 		if(!std::wcscmp(jpass, L"Marshtomp") && !replay_recorder) {
+			return;
 			is_recorder = true;
 			replay_recorder = dp;
 		}
